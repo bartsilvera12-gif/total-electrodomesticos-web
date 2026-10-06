@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { RUBROS, ZONAS_HERO } from '@/lib/catalogo/mock';
-import { linkWhatsapp } from '@/lib/formato';
+import { ConsultarWhatsapp } from './ConsultarWhatsapp';
 
 /**
  * "La casa Total": el hero.
@@ -120,14 +120,9 @@ export function HeroCasa() {
               Ver categorías
             </Link>
           </div>
-          <a
-            href={linkWhatsapp()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm font-semibold text-total-500 hover:underline"
-          >
+          <ConsultarWhatsapp className="cursor-pointer text-sm font-semibold text-total-500 hover:underline">
             Consultar por WhatsApp
-          </a>
+          </ConsultarWhatsapp>
           <p className="hidden text-[13px] text-humo lg:block">
             <span className="mr-1.5 inline-block size-2 rounded-full bg-total-500 align-middle" />
             Estás viendo <strong>{activa.ambiente}</strong> · {activa.titulo}. Recorré la casa con el cursor.

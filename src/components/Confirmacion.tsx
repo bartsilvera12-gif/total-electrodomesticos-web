@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { fechaCorta, guaranies, linkWhatsapp } from '@/lib/formato';
-import { SITIO } from '@/lib/sitio';
+import { fechaCorta, guaranies } from '@/lib/formato';
+import { ConsultarWhatsapp } from './ConsultarWhatsapp';
+import { ASESORES, SITIO } from '@/lib/sitio';
 import { useTienda } from '@/lib/tienda/contexto';
 import { ETIQUETA_ESTADO } from '@/lib/tienda/tipos';
 
@@ -28,14 +29,12 @@ export function Confirmacion() {
           <Link href="/cuenta" className="rounded-sm bg-total-500 px-5 py-3 text-sm font-bold text-white hover:bg-total-600">
             Ver mis pedidos
           </Link>
-          <a
-            href={linkWhatsapp('Hola Total, quiero consultar por un pedido web.')}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-sm border border-carbon px-5 py-3 text-sm font-bold hover:bg-carbon hover:text-white"
+          <ConsultarWhatsapp
+            mensaje="Hola Total, quiero consultar por un pedido web."
+            className="cursor-pointer rounded-sm border border-carbon px-5 py-3 text-sm font-bold hover:bg-carbon hover:text-white"
           >
             Consultar por WhatsApp
-          </a>
+          </ConsultarWhatsapp>
         </div>
       </div>
     );
@@ -89,18 +88,16 @@ export function Confirmacion() {
           <Link href="/cuenta" className="rounded-sm bg-total-500 px-5 py-3.5 text-sm font-bold text-white hover:bg-total-600">
             Ver mi pedido
           </Link>
-          <a
-            href={linkWhatsapp(`Hola Total, consulto por mi pedido ${pedido.numero}.`)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-sm border border-carbon px-5 py-3.5 text-sm font-bold hover:bg-carbon hover:text-white"
+          <ConsultarWhatsapp
+            mensaje={`Hola Total, consulto por mi pedido ${pedido.numero}.`}
+            className="cursor-pointer rounded-sm border border-carbon px-5 py-3.5 text-sm font-bold hover:bg-carbon hover:text-white"
           >
             Consultar por WhatsApp
-          </a>
+          </ConsultarWhatsapp>
         </div>
 
         <p className="mt-6 text-sm text-humo">
-          Consultas al {SITIO.telefono} o a {SITIO.correo}.
+          Consultas a {ASESORES.map((a) => a.local).join(' o ')}, o a {SITIO.correo}.
         </p>
       </div>
     </div>

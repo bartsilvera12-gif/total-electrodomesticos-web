@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { useTienda } from '@/lib/tienda/contexto';
-import { guaranies, linkWhatsapp } from '@/lib/formato';
+import { guaranies } from '@/lib/formato';
+import { ConsultarWhatsapp } from './ConsultarWhatsapp';
 import type { Producto } from '@/lib/catalogo/tipos';
 import { FotoProducto } from './FotoProducto';
 
@@ -142,14 +143,14 @@ export function CarritoLateral({
               >
                 Finalizar compra
               </Link>
-              <a
-                href={linkWhatsapp(mensaje)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 block py-2 text-center text-sm font-semibold text-total-500 hover:underline"
-              >
-                Consultar este carrito por WhatsApp
-              </a>
+              <div className="mt-2 flex justify-center">
+                <ConsultarWhatsapp
+                  mensaje={mensaje}
+                  className="cursor-pointer py-2 text-sm font-semibold text-total-500 hover:underline"
+                >
+                  Consultar este carrito por WhatsApp
+                </ConsultarWhatsapp>
+              </div>
             </footer>
           </>
         )}

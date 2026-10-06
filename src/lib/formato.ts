@@ -15,10 +15,11 @@ export function slugificar(texto: string): string {
     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-export const WHATSAPP = '595983918520';
-
-/** Enlace internacional de WhatsApp para Paraguay */
-export function linkWhatsapp(mensaje?: string): string {
-  const base = `https://wa.me/${WHATSAPP}`;
+/**
+ * Enlace de WhatsApp. `numero` va en formato internacional sin signos
+ * (Paraguay: 595 + número sin el 0 inicial), que es lo que espera wa.me.
+ */
+export function linkWhatsapp(numero: string, mensaje?: string): string {
+  const base = `https://wa.me/${numero}`;
   return mensaje ? `${base}?text=${encodeURIComponent(mensaje)}` : base;
 }

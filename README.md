@@ -55,6 +55,16 @@ después entre en conflicto.
 - **Favoritos** — persisten, con su propia página
 - **SEO** — metadata por ruta, Open Graph, canonical, sitemap, robots y datos
   estructurados de producto
+- **WhatsApp** — dos líneas de atención. Cada punto de contacto abre un selector
+  de asesor y le pasa el mensaje con el contexto (producto, carrito o pedido)
+
+## Los números de WhatsApp
+
+Están en `ASESORES`, en `src/lib/sitio.ts`. Las etiquetas "Asesor 1" y "Asesor 2"
+son provisorias: cuando Total confirme quién atiende cada línea, se cambian ahí y
+se propagan solas a los siete puntos de contacto. Si en algún momento queda un
+solo número, el selector desaparece y vuelve a ser un enlace directo, sin tocar
+ningún componente.
 
 ## Datos
 

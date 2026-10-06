@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { RUBROS } from '@/lib/catalogo/mock';
 import { SITIO } from '@/lib/sitio';
-import { linkWhatsapp } from '@/lib/formato';
+import { LineasWhatsapp } from './ConsultarWhatsapp';
 
 export function Pie() {
   return (
@@ -43,10 +43,9 @@ export function Pie() {
         <div>
           <h2 className="text-sm font-bold">Contacto</h2>
           <ul className="mt-3 flex flex-col gap-2 text-sm text-grafito">
-            <li>
-              <a href={linkWhatsapp()} target="_blank" rel="noopener noreferrer" className="hover:text-total-500">
-                WhatsApp {SITIO.telefono}
-              </a>
+            <li className="flex flex-col gap-2">
+              <span className="font-semibold text-carbon">WhatsApp</span>
+              <LineasWhatsapp className="hover:text-total-500" />
             </li>
             <li>
               <a href={`mailto:${SITIO.correo}`} className="break-all hover:text-total-500">{SITIO.correo}</a>

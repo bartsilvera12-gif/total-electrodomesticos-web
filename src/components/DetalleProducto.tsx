@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Producto } from '@/lib/catalogo/tipos';
 import { RUBROS } from '@/lib/catalogo/mock';
-import { guaranies, linkWhatsapp } from '@/lib/formato';
+import { guaranies } from '@/lib/formato';
+import { ConsultarWhatsapp } from './ConsultarWhatsapp';
 import { useTienda } from '@/lib/tienda/contexto';
 import { EstadoStock, sePuedeComprar } from './EstadoStock';
 import { FotoProducto } from './FotoProducto';
@@ -131,14 +132,12 @@ export function DetalleProducto({
           )}
 
           <div className="flex flex-wrap items-center gap-4">
-            <a
-              href={linkWhatsapp(`Hola Total, quiero consultar por: ${producto.marca} ${producto.nombre} (cód. ${producto.codigo})`)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-semibold text-total-500 hover:underline"
+            <ConsultarWhatsapp
+              mensaje={`Hola Total, quiero consultar por: ${producto.marca} ${producto.nombre} (cód. ${producto.codigo})`}
+              className="cursor-pointer text-sm font-semibold text-total-500 hover:underline"
             >
               Consultar por WhatsApp sobre este producto
-            </a>
+            </ConsultarWhatsapp>
             <button
               type="button"
               onClick={() => alternarFavorito(producto.id)}

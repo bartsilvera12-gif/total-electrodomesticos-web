@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PRODUCTOS, RUBROS } from '@/lib/catalogo/mock';
 import { SITIO } from '@/lib/sitio';
-import { linkWhatsapp, slugificar } from '@/lib/formato';
+import { slugificar } from '@/lib/formato';
+import { LineasWhatsapp } from './ConsultarWhatsapp';
 import { useTienda } from '@/lib/tienda/contexto';
 import { Buscador } from './Buscador';
 import { CarritoLateral } from './CarritoLateral';
@@ -53,9 +54,7 @@ export function Encabezado() {
           <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4 px-6 py-2">
             <span>Comprá online · Consultá por WhatsApp · Atención personalizada</span>
             <div className="hidden items-center gap-5 md:flex">
-              <a href={linkWhatsapp()} target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
-                WhatsApp {SITIO.telefono}
-              </a>
+              <LineasWhatsapp className="font-semibold hover:underline" />
               <a href={SITIO.instagram} target="_blank" rel="noopener noreferrer" className="opacity-90 hover:underline">Instagram</a>
               <a href={SITIO.facebook} target="_blank" rel="noopener noreferrer" className="opacity-90 hover:underline">Facebook</a>
             </div>
