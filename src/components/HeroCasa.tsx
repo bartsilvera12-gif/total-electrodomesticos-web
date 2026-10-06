@@ -26,6 +26,92 @@ const CELDAS = [
   [13, 6], [19, 8], [22, 5], [6, 9], [16, 10], [24, 3], [1, 10], [11, 10], [21, 11],
 ];
 
+/**
+ * Una habitación de la casa.
+ *
+ * Va fuera de HeroCasa a propósito. Declarada adentro, React la toma como un
+ * tipo nuevo en cada render y desmonta las cinco zonas en cada cambio: los
+ * elementos nacen ya en su valor final, no hay transición que correr y las
+ * fotos parpadean.
+ *
+ * Lo que da vida al hero es que la zona activa CRECE: su flex-grow pasa de 1 a
+ * 1.9 y empuja a las vecinas, con la fila entera creciendo a 1.25. Los valores
+ * y las transiciones son los del diseño original.
+ */
+function Zona({
+  z, activa, alActivar, centrado = false,
+}: {
+  z: (typeof ZONAS_HERO)[number];
+  activa: boolean;
+  alActivar: () => void;
+  centrado?: boolean;
+}) {
+  const rubro = RUBROS.find((r) => r.id === z.rubro);
+  // El techo no crece: es un triángulo, agrandarlo deforma la casa
+  const crece = activa && z.id !== 'clima' ? 1.9 : 1;
+
+  return (
+    <Link
+      href={rubro ? `/categoria/${rubro.slug}` : '/productos'}
+      onMouseEnter={alActivar}
+      onFocus={alActivar}
+      aria-label={z.titulo}
+      className="group relative min-w-0 overflow-hidden"
+      style={{ flex: `${crece} 1 0`, transition: 'flex-grow .7s cubic-bezier(.2,.7,.2,1)' }}
+    >
+      <Image
+        src={z.foto}
+        alt=""
+        fill
+        sizes="(max-width: 1024px) 100vw, 55vw"
+        priority={z.id === 'living'}
+        className="object-cover"
+        style={{
+          transform: `scale(${activa ? 1.06 : 1})`,
+          filter: `brightness(${activa ? 1 : 0.78})`,
+          transition: 'transform 1.4s cubic-bezier(.2,.7,.2,1), filter .5s',
+        }}
+      />
+      <div className="absolute inset-0 bg-linear-to-t from-carbon/80 via-carbon/10 to-transparent" />
+      <div
+        className={`absolute bottom-4 flex flex-col gap-2 text-white ${
+          centrado ? 'inset-x-[25%] items-center text-center' : 'inset-x-5'
+        }`}
+      >
+        <span className="font-mono text-[11px] tracking-widest opacity-85">
+          {z.ambiente.toUpperCase()}
+        </span>
+        <span
+          className="leading-none font-bold tracking-tight"
+          style={{ fontSize: activa ? '30px' : '20px', transition: 'font-size .5s' }}
+        >
+          {z.titulo}
+        </span>
+        {rubro && (
+          <div
+            className={`flex flex-wrap gap-1.5 overflow-hidden ${centrado ? 'justify-center' : ''}`}
+            style={{
+              opacity: activa ? 1 : 0,
+              transform: `translateY(${activa ? '0' : '8px'})`,
+              maxHeight: activa ? '120px' : '0px',
+              transition: 'opacity .45s .1s, transform .45s .1s, max-height .5s',
+            }}
+          >
+            {rubro.subcategorias.map((sub) => (
+              <span
+                key={sub}
+                className="rounded-full bg-white/95 px-3 py-1.5 text-[13px] font-semibold text-carbon"
+              >
+                {sub}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 export function HeroCasa() {
   const [zona, setZona] = useState<string>('living');
   const seccion = useRef<HTMLElement>(null);
@@ -43,90 +129,6 @@ export function HeroCasa() {
     const r = el.getBoundingClientRect();
     el.style.setProperty('--mx', `${e.clientX - r.left}px`);
     el.style.setProperty('--my', `${e.clientY - r.top}px`);
-  };
-
-  /**
-   * Una habitación.
-   *
-   * Lo que da vida al hero es que la zona activa CRECE: su flex-grow pasa de 1
-   * a 1.9 y empuja a las vecinas, con la fila entera creciendo a 1.25. Los
-   * valores y las transiciones son los del diseño original; no son decorativos,
-   * son el movimiento de la casa.
-   */
-  const Zona = ({
-    z, centrado = false,
-  }: { z: (typeof ZONAS_HERO)[number]; centrado?: boolean }) => {
-    const rubro = rubroDe(z.rubro);
-    const esActiva = zona === z.id;
-    // El techo no crece: es un triángulo, agrandarlo deforma la casa
-    const crece = esActiva && z.id !== 'clima' ? 1.9 : 1;
-
-    return (
-      <Link
-        href={rubro ? `/categoria/${rubro.slug}` : '/productos'}
-        onMouseEnter={() => setZona(z.id)}
-        onFocus={() => setZona(z.id)}
-        aria-label={z.titulo}
-        className="group relative min-w-0 overflow-hidden"
-        style={{
-          flex: `${crece} 1 0`,
-          transition: 'flex-grow .7s cubic-bezier(.2,.7,.2,1)',
-        }}
-      >
-        <Image
-          src={z.foto}
-          alt=""
-          fill
-          sizes="(max-width: 1024px) 100vw, 55vw"
-          priority={z.id === 'living'}
-          className="object-cover"
-          style={{
-            transform: `scale(${esActiva ? 1.06 : 1})`,
-            filter: `brightness(${esActiva ? 1 : 0.78})`,
-            transition: 'transform 1.4s cubic-bezier(.2,.7,.2,1), filter .5s',
-          }}
-        />
-        <div className="absolute inset-0 bg-linear-to-t from-carbon/80 via-carbon/10 to-transparent" />
-        <div
-          className={`absolute bottom-4 flex flex-col gap-2 text-white ${
-            centrado ? 'inset-x-[25%] items-center text-center' : 'inset-x-5'
-          }`}
-        >
-          <span className="font-mono text-[11px] tracking-widest opacity-85">
-            {z.ambiente.toUpperCase()}
-          </span>
-          <span
-            className="leading-none font-bold tracking-tight"
-            style={{
-              fontSize: esActiva ? '30px' : '20px',
-              transition: 'font-size .5s',
-            }}
-          >
-            {z.titulo}
-          </span>
-          {rubro && (
-            <div
-              className={`flex flex-wrap gap-1.5 overflow-hidden ${centrado ? 'justify-center' : ''}`}
-              style={{
-                opacity: esActiva ? 1 : 0,
-                transform: `translateY(${esActiva ? '0' : '8px'})`,
-                maxHeight: esActiva ? '120px' : '0px',
-                transition: 'opacity .45s .1s, transform .45s .1s, max-height .5s',
-              }}
-            >
-              {rubro.subcategorias.map((sub) => (
-                <span
-                  key={sub}
-                  className="rounded-full bg-white/95 px-3 py-1.5 text-[13px] font-semibold text-carbon"
-                >
-                  {sub}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </Link>
-    );
   };
 
   const reticula = (color: string) =>
@@ -242,21 +244,21 @@ export function HeroCasa() {
             style={{ clipPath: CASA }}
           >
             <div className="flex shrink-0 basis-[calc(33%-5px)] gap-[5px]">
-              <Zona z={ZONAS_HERO[0]} centrado />
+              <Zona z={ZONAS_HERO[0]} activa={zona === ZONAS_HERO[0].id} alActivar={() => setZona(ZONAS_HERO[0].id)} centrado />
             </div>
             <div
               className="flex min-h-0 gap-[5px]"
               style={{ flex: `${filaA} 1 0`, transition: 'flex-grow .7s cubic-bezier(.2,.7,.2,1)' }}
             >
-              <Zona z={ZONAS_HERO[1]} />
-              <Zona z={ZONAS_HERO[2]} />
+              <Zona z={ZONAS_HERO[1]} activa={zona === ZONAS_HERO[1].id} alActivar={() => setZona(ZONAS_HERO[1].id)} />
+              <Zona z={ZONAS_HERO[2]} activa={zona === ZONAS_HERO[2].id} alActivar={() => setZona(ZONAS_HERO[2].id)} />
             </div>
             <div
               className="flex min-h-0 gap-[5px]"
               style={{ flex: `${filaB} 1 0`, transition: 'flex-grow .7s cubic-bezier(.2,.7,.2,1)' }}
             >
-              <Zona z={ZONAS_HERO[3]} />
-              <Zona z={ZONAS_HERO[4]} />
+              <Zona z={ZONAS_HERO[3]} activa={zona === ZONAS_HERO[3].id} alActivar={() => setZona(ZONAS_HERO[3].id)} />
+              <Zona z={ZONAS_HERO[4]} activa={zona === ZONAS_HERO[4].id} alActivar={() => setZona(ZONAS_HERO[4].id)} />
             </div>
           </div>
         </div>
