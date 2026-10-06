@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f5f6f8;color:#15171c;font-family:'Archivo',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#355DB4;text-decoration:none}
+a:hover{color:#284a93;text-decoration:underline}
+button,input,select,textarea{font-family:inherit}
+:focus-visible{outline:2px solid #355DB4;outline-offset:2px}
+</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-wrap:wrap;">
+  <aside style="flex:0 0 232px;background:#fff;border-right:1px solid #e3e6eb;display:flex;flex-direction:column;min-height:100vh;">
+    <div style="padding:18px 18px 14px;border-bottom:1px solid #e3e6eb;"><img src="assets/logo-total.png" alt="TOTAL Electrodomésticos" style="height:38px;display:block;"><div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b7079;margin-top:10px;letter-spacing:.08em;">PANEL WEB</div></div>
+    <nav style="display:flex;flex-direction:column;padding:10px 0;">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <button onClick="{{ n.select }}" style="background:{{ n.bg }};border:0;border-left:3px solid {{ n.line }};padding:11px 18px;font-size:14px;font-weight:{{ n.w }};color:#15171c;text-align:left;cursor:pointer;">{{ n.name }}</button>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto;padding:16px 18px;border-top:1px solid #e3e6eb;font-size:12px;color:#6b7079;line-height:1.5;">Este panel administra contenido de la tienda online. Productos, precios, stock, clientes y pedidos se sincronizarán con el ERP en la siguiente etapa.</div>
+  </aside>
+
+  <main style="flex:1 1 600px;min-width:0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 32px;background:#fff;border-bottom:1px solid #e3e6eb;flex-wrap:wrap;">
+      <h1 style="margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;">{{ title }}</h1>
+      <div style="display:flex;gap:14px;align-items:center;font-size:13px;"><span style="display:flex;align-items:center;gap:6px;color:#4b505a;"><span style="width:8px;height:8px;border-radius:50%;border:1.5px solid #6b7079;"></span>ERP: sin conectar</span><a href="index.html">Ver tienda</a></div>
+    </div>
+
+    <div style="padding:28px 32px 64px;">
+    <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));background:#fff;border:1px solid #e3e6eb;">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="5">
+          <button onClick="{{ k.go }}" style="text-align:left;background:none;border:0;border-right:1px solid #e3e6eb;padding:18px 20px;cursor:pointer;" style-hover="background:#f7f9fd;"><div style="font-size:13px;color:#6b7079;">{{ k.label }}</div><div style="font-size:30px;font-weight:700;margin-top:6px;letter-spacing:-.02em;">{{ k.v }}</div><div style="font-size:12px;color:#355DB4;margin-top:4px;font-weight:600;">{{ k.cta }}</div></button>
+        </sc-for>
+      </div>
+      <p style="font-size:12px;color:#6b7079;margin:8px 0 28px;">Valores de ejemplo calculados sobre datos de prueba.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:24px;">
+        <section style="flex:1.4 1 420px;background:#fff;border:1px solid #e3e6eb;">
+          <div style="display:flex;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #e3e6eb;"><strong style="font-size:15px;">Últimos pedidos web</strong><button onClick="{{ goOrders }}" style="background:none;border:0;font-size:13px;font-weight:600;color:#355DB4;cursor:pointer;">Ver todos</button></div>
+          <sc-for list="{{ ordersTop }}" as="o" hint-placeholder-count="3">
+            <div style="display:flex;gap:14px;align-items:center;padding:12px 18px;border-bottom:1px solid #f0f1f3;font-size:14px;flex-wrap:wrap;"><span style="font-family:'IBM Plex Mono',monospace;min-width:84px;">{{ o.n }}</span><span style="flex:1;min-width:120px;">{{ o.cliente }}</span><strong>{{ o.totalFmt }}</strong><span style="background:{{ o.bg }};color:{{ o.c }};border:1px solid {{ o.b }};font-size:11px;font-weight:600;padding:3px 8px;">{{ o.pago }}</span></div>
+          </sc-for>
+        </section>
+        <section style="flex:1 1 300px;background:#fff;border:1px solid #e3e6eb;">
+          <div style="padding:14px 18px;border-bottom:1px solid #e3e6eb;"><strong style="font-size:15px;">Últimas consultas</strong></div>
+          <sc-for list="{{ consultas }}" as="c" hint-placeholder-count="3">
+            <div style="padding:12px 18px;border-bottom:1px solid #f0f1f3;font-size:14px;"><div style="display:flex;justify-content:space-between;gap:8px;"><strong>{{ c.canal }}</strong><span style="color:#6b7079;font-size:12px;">{{ c.t }}</span></div><div style="color:#4b505a;margin-top:2px;">{{ c.prod }}</div></div>
+          </sc-for>
+        </section>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isCat }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+        <input value="{{ q }}" onChange="{{ onQ }}" placeholder="Buscar por nombre o código…" style="flex:1 1 280px;border:1px solid #c9ced8;padding:11px 12px;font-size:14px;background:#fff;border-radius:3px;">
+        <div style="position:relative;">
+          <button onClick="{{ ddState.toggle }}" aria-haspopup="listbox" aria-expanded="{{ ddState.open }}" style="display:flex;align-items:center;justify-content:space-between;gap:14px;min-width:200px;height:100%;background:#fff;border:1px solid {{ ddState.b }};padding:11px 12px;font-size:14px;font-weight:600;color:#15171c;cursor:pointer;border-radius:3px;" style-hover="border-color:#355DB4;">{{ ddState.label }}<span style="font-size:10px;color:#355DB4;transform:{{ ddState.rot }};transition:transform .15s;">▾</span></button>
+          <sc-if value="{{ ddState.open }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ closeDD }}" style="position:fixed;inset:0;z-index:30;"></div>
+            <div role="listbox" style="position:absolute;right:0;top:calc(100% + 6px);z-index:31;min-width:220px;background:#fff;border:1px solid #15171c;box-shadow:0 14px 30px -14px rgba(21,23,28,.35);padding:6px 0;">
+              <sc-for list="{{ ddState.opts }}" as="o" hint-placeholder-count="4"><button role="option" onClick="{{ o.pick }}" style="display:flex;justify-content:space-between;width:100%;background:{{ o.bg }};border:0;border-left:3px solid {{ o.line }};padding:11px 14px;font-size:14px;font-weight:{{ o.w }};color:{{ o.c }};cursor:pointer;text-align:left;" style-hover="background:#eef2fa;"><span>{{ o.name }}</span><span style="color:#355DB4;">{{ o.mark }}</span></button></sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #e3e6eb;overflow-x:auto;">
+        <div style="display:grid;grid-template-columns:64px minmax(200px,2fr) 90px minmax(130px,1fr) 110px 90px 90px;min-width:820px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:#6b7079;letter-spacing:.06em;border-bottom:1px solid #e3e6eb;">
+          <div style="padding:11px 14px;">IMAGEN</div><div style="padding:11px 14px;">PRODUCTO</div><div style="padding:11px 14px;">CÓDIGO</div><div style="padding:11px 14px;">CATEGORÍA</div><div style="padding:11px 14px;">ESTADO WEB</div><div style="padding:11px 14px;">DESTACADO</div><div style="padding:11px 14px;"></div>
+        </div>
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+          <div style="display:grid;grid-template-columns:64px minmax(200px,2fr) 90px minmax(130px,1fr) 110px 90px 90px;min-width:820px;font-size:14px;border-bottom:1px solid #f0f1f3;align-items:center;" style-hover="background:#f7f9fd;">
+            <div style="padding:8px 14px;"><div style="width:40px;height:40px;background:{{ r.imgBg }};border:1px dashed {{ r.imgB }};display:flex;align-items:center;justify-content:center;font-size:9px;color:#6b7079;">{{ r.imgTxt }}</div></div>
+            <div style="padding:8px 14px;"><div style="font-weight:600;">{{ r.brand }} {{ r.name }}</div><div style="font-size:12px;color:#6b7079;">{{ r.descNote }}</div></div>
+            <div style="padding:8px 14px;font-family:'IBM Plex Mono',monospace;font-size:13px;">{{ r.code }}</div>
+            <div style="padding:8px 14px;color:#4b505a;">{{ r.cat }}</div>
+            <div style="padding:8px 14px;"><span style="background:{{ r.sbg }};color:{{ r.sc }};border:1px solid {{ r.sb }};font-size:11px;font-weight:600;padding:3px 8px;">{{ r.web }}</span></div>
+            <div style="padding:8px 14px;"><button onClick="{{ r.toggleFeat }}" aria-label="Destacado" style="width:38px;height:22px;border-radius:11px;border:0;background:{{ r.featBg }};position:relative;cursor:pointer;"><span style="position:absolute;top:3px;left:{{ r.featX }};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;"></span></button></div>
+            <div style="padding:8px 14px;"><button onClick="{{ r.edit }}" style="background:none;border:0;font-size:13px;font-weight:600;color:#355DB4;cursor:pointer;">Editar</button></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isProd }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px;"><button onClick="{{ goCat }}" style="background:none;border:0;padding:0;font-size:14px;color:#355DB4;font-weight:600;cursor:pointer;">← Catálogo web</button><div style="display:flex;gap:8px;"><button style="background:#fff;border:1px solid #15171c;padding:10px 16px;font-size:14px;font-weight:600;border-radius:3px;cursor:pointer;">Guardar borrador</button><button style="background:#355DB4;color:#fff;border:0;padding:11px 18px;font-size:14px;font-weight:600;border-radius:3px;cursor:pointer;">Publicar</button></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;">
+        <div style="flex:2 1 480px;display:flex;flex-direction:column;gap:20px;min-width:0;">
+          <section style="background:#fff;border:1px solid #e3e6eb;padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <strong style="font-size:15px;">Contenido web</strong>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Nombre comercial<input defaultValue="{{ ep.fullName }}" style="border:1px solid #c9ced8;padding:11px;font-size:14px;border-radius:3px;"></label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Slug<div style="display:flex;border:1px solid #c9ced8;border-radius:3px;"><span style="padding:11px;background:#f5f6f8;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#6b7079;">/producto/</span><input defaultValue="{{ ep.slug }}" style="flex:1;border:0;padding:11px;font-size:14px;font-family:'IBM Plex Mono',monospace;min-width:0;"></div></label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Descripción<textarea rows="4" placeholder="Descripción comercial del producto" style="border:1px solid #c9ced8;padding:11px;font-size:14px;border-radius:3px;resize:vertical;"></textarea></label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Características principales<textarea rows="3" defaultValue="{{ ep.specLines }}" style="border:1px solid #c9ced8;padding:11px;font-size:14px;border-radius:3px;resize:vertical;"></textarea></label>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Ficha técnica
+              <div style="display:grid;grid-template-columns:1fr 1fr 32px;gap:6px;">
+                <input placeholder="Atributo" style="border:1px solid #c9ced8;padding:10px;font-size:14px;border-radius:3px;min-width:0;"><input placeholder="Valor" style="border:1px solid #c9ced8;padding:10px;font-size:14px;border-radius:3px;min-width:0;"><button style="border:1px solid #c9ced8;background:#fff;cursor:pointer;">+</button>
+              </div>
+            </div>
+          </section>
+          <section style="background:#fff;border:1px solid #e3e6eb;padding:20px;">
+            <strong style="font-size:15px;">Imágenes</strong>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;margin-top:14px;">
+              <div style="aspect-ratio:1/1;background:repeating-linear-gradient(135deg,#f3f5f8 0 8px,#eaedf2 8px 16px);border:2px solid #355DB4;display:flex;align-items:flex-end;padding:6px;font-size:11px;font-weight:600;">Principal</div>
+              <div style="aspect-ratio:1/1;background:repeating-linear-gradient(135deg,#f3f5f8 0 8px,#eaedf2 8px 16px);"></div>
+              <div style="aspect-ratio:1/1;border:1px dashed #c9ced8;display:flex;align-items:center;justify-content:center;font-size:13px;color:#355DB4;font-weight:600;text-align:center;padding:8px;">Subir imagen o video</div>
+            </div>
+          </section>
+          <section style="background:#fff;border:1px solid #e3e6eb;padding:20px;display:flex;flex-direction:column;gap:14px;">
+            <strong style="font-size:15px;">SEO</strong>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Título<input defaultValue="{{ ep.seoTitle }}" style="border:1px solid #c9ced8;padding:11px;font-size:14px;border-radius:3px;"></label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Meta descripción<textarea rows="2" style="border:1px solid #c9ced8;padding:11px;font-size:14px;border-radius:3px;"></textarea></label>
+            <div style="border:1px solid #e3e6eb;padding:12px;font-size:13px;"><div style="color:#284a93;font-size:16px;">{{ ep.seoTitle }}</div><div style="color:#4b505a;font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:2px;">total.com.py/producto/{{ ep.slug }}</div></div>
+          </section>
+        </div>
+        <div style="flex:1 1 280px;display:flex;flex-direction:column;gap:20px;min-width:0;">
+          <section style="background:#fff;border:1px solid #e3e6eb;padding:20px;display:flex;flex-direction:column;gap:12px;">
+            <strong style="font-size:15px;">Publicación</strong>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;position:relative;">Estado web
+              <button onClick="{{ ddWeb.toggle }}" aria-haspopup="listbox" aria-expanded="{{ ddWeb.open }}" style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid {{ ddWeb.b }};padding:10px 12px;font-size:14px;font-weight:500;color:#15171c;cursor:pointer;border-radius:3px;text-align:left;" style-hover="border-color:#355DB4;">{{ ddWeb.label }}<span style="font-size:10px;color:#355DB4;transform:{{ ddWeb.rot }};transition:transform .15s;">▾</span></button>
+              <sc-if value="{{ ddWeb.open }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ closeDD }}" style="position:fixed;inset:0;z-index:30;"></div>
+                <div role="listbox" style="position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:31;background:#fff;border:1px solid #15171c;box-shadow:0 14px 30px -14px rgba(21,23,28,.35);padding:6px 0;">
+                  <sc-for list="{{ ddWeb.opts }}" as="o" hint-placeholder-count="3"><button role="option" onClick="{{ o.pick }}" style="display:flex;justify-content:space-between;width:100%;background:{{ o.bg }};border:0;border-left:3px solid {{ o.line }};padding:10px 14px;font-size:14px;font-weight:{{ o.w }};color:{{ o.c }};cursor:pointer;text-align:left;" style-hover="background:#eef2fa;"><span>{{ o.name }}</span><span style="color:#355DB4;">{{ o.mark }}</span></button></sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;position:relative;">Categoría web
+              <button onClick="{{ ddCat.toggle }}" aria-haspopup="listbox" aria-expanded="{{ ddCat.open }}" style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid {{ ddCat.b }};padding:10px 12px;font-size:14px;font-weight:500;color:#15171c;cursor:pointer;border-radius:3px;text-align:left;" style-hover="border-color:#355DB4;">{{ ddCat.label }}<span style="font-size:10px;color:#355DB4;transform:{{ ddCat.rot }};transition:transform .15s;">▾</span></button>
+              <sc-if value="{{ ddCat.open }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ closeDD }}" style="position:fixed;inset:0;z-index:30;"></div>
+                <div role="listbox" style="position:absolute;left:0;right:0;top:100%;margin-top:6px;z-index:31;background:#fff;border:1px solid #15171c;box-shadow:0 14px 30px -14px rgba(21,23,28,.35);padding:6px 0;max-height:300px;overflow:auto;">
+                  <sc-for list="{{ ddCat.opts }}" as="o" hint-placeholder-count="10"><button role="option" onClick="{{ o.pick }}" style="display:flex;justify-content:space-between;width:100%;background:{{ o.bg }};border:0;border-left:3px solid {{ o.line }};padding:10px 14px;font-size:14px;font-weight:{{ o.w }};color:{{ o.c }};cursor:pointer;text-align:left;" style-hover="background:#eef2fa;"><span>{{ o.name }}</span><span style="color:#355DB4;">{{ o.mark }}</span></button></sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Marca<input defaultValue="{{ ep.brand }}" style="border:1px solid #c9ced8;padding:10px;font-size:14px;border-radius:3px;"></label>
+            <label onClick="{{ toggleEpFeat }}" style="display:flex;align-items:center;gap:10px;font-size:14px;cursor:pointer;"><span role="checkbox" aria-checked="{{ ep.feat }}" style="width:18px;height:18px;border:1.5px solid {{ epBox.b }};background:{{ epBox.bg }};color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ epBox.mark }}</span>Mostrar en “Elegidos de Total”</label>
+          </section>
+          <section style="background:#fff;border:1px solid #e3e6eb;padding:20px;display:flex;flex-direction:column;gap:2px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;"><strong style="font-size:15px;">Datos del ERP</strong><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6b7079;">SOLO LECTURA</span></div>
+            <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f1f3;font-size:14px;"><span style="color:#6b7079;">Código</span><span style="font-family:'IBM Plex Mono',monospace;">{{ ep.code }}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f1f3;font-size:14px;"><span style="color:#6b7079;">Código de barras</span><span style="color:#9aa0aa;">Pendiente</span></div>
+            <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f1f3;font-size:14px;"><span style="color:#6b7079;">Precio de venta</span><strong>{{ ep.priceFmt }}</strong></div>
+            <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f1f3;font-size:14px;"><span style="color:#6b7079;">Stock</span><span>{{ ep.stockLabel }}</span></div>
+            <p style="font-size:12px;color:#6b7079;margin:10px 0 0;line-height:1.5;">Estos campos se mostrarán sincronizados desde el ERP. El costo interno no se expone en la web.</p>
+          </section>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;">
+        <section style="flex:1.4 1 440px;background:#fff;border:1px solid #e3e6eb;">
+          <div style="padding:14px 18px;border-bottom:1px solid #e3e6eb;display:flex;justify-content:space-between;"><strong style="font-size:15px;">Bloques de la Home</strong><span style="font-size:12px;color:#6b7079;">Orden y visibilidad</span></div>
+          <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="8">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid #f0f1f3;font-size:14px;">
+              <div style="display:flex;flex-direction:column;"><button onClick="{{ b.up }}" aria-label="Subir" style="background:none;border:0;cursor:pointer;font-size:11px;padding:0 4px;color:#4b505a;">▲</button><button onClick="{{ b.down }}" aria-label="Bajar" style="background:none;border:0;cursor:pointer;font-size:11px;padding:0 4px;color:#4b505a;">▼</button></div>
+              <div style="flex:1;min-width:0;"><div style="font-weight:600;color:{{ b.c }};">{{ b.name }}</div><div style="font-size:12px;color:#6b7079;">{{ b.note }}</div></div>
+              <button onClick="{{ b.toggle }}" aria-label="Visible" style="width:38px;height:22px;border-radius:11px;border:0;background:{{ b.bg }};position:relative;cursor:pointer;"><span style="position:absolute;top:3px;left:{{ b.x }};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;"></span></button>
+              <button style="background:none;border:0;font-size:13px;font-weight:600;color:#355DB4;cursor:pointer;">Editar</button>
+            </div>
+          </sc-for>
+        </section>
+        <section style="flex:1 1 300px;background:#fff;border:1px solid #e3e6eb;padding:20px;display:flex;flex-direction:column;gap:14px;">
+          <strong style="font-size:15px;">Hero</strong>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Título<input defaultValue="Todo para tu casa. Todo en un solo lugar." style="border:1px solid #c9ced8;padding:11px;font-size:14px;border-radius:3px;"></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Texto<textarea rows="3" defaultValue="Tecnología, electrodomésticos, muebles y productos para acompañar cada espacio de tu hogar." style="border:1px solid #c9ced8;padding:11px;font-size:14px;border-radius:3px;"></textarea></label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;">Mensaje de la barra superior<input defaultValue="Comprá online · Consultá por WhatsApp · Atención personalizada" style="border:1px solid #c9ced8;padding:11px;font-size:14px;border-radius:3px;"></label>
+          <div style="font-size:13px;font-weight:600;">Imágenes por espacio</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;">
+            <sc-for list="{{ zones }}" as="z" hint-placeholder-count="5"><div style="aspect-ratio:4/3;background:repeating-linear-gradient(135deg,#f3f5f8 0 8px,#eaedf2 8px 16px);display:flex;align-items:flex-end;padding:6px;font-size:12px;font-weight:600;">{{ z }}</div></sc-for>
+          </div>
+        </section>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isOrders }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff;border:1px solid #e3e6eb;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#4b505a;">Pedidos generados en la web. La equivalencia con ventas y facturación del ERP se define en la etapa de integración.</div>
+      <div style="background:#fff;border:1px solid #e3e6eb;overflow-x:auto;">
+        <div style="display:grid;grid-template-columns:110px minmax(160px,1.5fr) 110px 140px 130px 120px 90px;min-width:880px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:#6b7079;letter-spacing:.06em;border-bottom:1px solid #e3e6eb;">
+          <div style="padding:11px 14px;">PEDIDO</div><div style="padding:11px 14px;">CLIENTE</div><div style="padding:11px 14px;">FECHA</div><div style="padding:11px 14px;">TOTAL</div><div style="padding:11px 14px;">PAGO</div><div style="padding:11px 14px;">ESTADO</div><div style="padding:11px 14px;">ORIGEN</div>
+        </div>
+        <sc-for list="{{ orders }}" as="o" hint-placeholder-count="6">
+          <div style="display:grid;grid-template-columns:110px minmax(160px,1.5fr) 110px 140px 130px 120px 90px;min-width:880px;font-size:14px;border-bottom:1px solid #f0f1f3;align-items:center;" style-hover="background:#f7f9fd;">
+            <div style="padding:12px 14px;font-family:'IBM Plex Mono',monospace;font-size:13px;">{{ o.n }}</div>
+            <div style="padding:12px 14px;">{{ o.cliente }}</div>
+            <div style="padding:12px 14px;color:#4b505a;">{{ o.date }}</div>
+            <div style="padding:12px 14px;font-weight:700;">{{ o.totalFmt }}</div>
+            <div style="padding:12px 14px;"><span style="background:{{ o.bg }};color:{{ o.c }};border:1px solid {{ o.b }};font-size:11px;font-weight:600;padding:3px 8px;">{{ o.pago }}</span></div>
+            <div style="padding:12px 14px;">{{ o.estado }}</div>
+            <div style="padding:12px 14px;color:#4b505a;">Web</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const fmt = n => 'Gs. ' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+const slug = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+const PRODUCTS = [
+  ['Samsung', 'Smart TV 55" 4K', '10234', 'TV & Audio', 3360000, 'Disponible', 'Publicado', true, true, true, '55" · 4K UHD · Smart TV'],
+  ['Midea', 'Aire acondicionado 12.000 BTU', '20412', 'Climatización', 3950000, 'Últimas unidades', 'Publicado', true, true, true, '12.000 BTU · Inverter · Split'],
+  ['Tokyo', 'Heladera 300 L', '30871', 'Refrigeración', 2890000, 'Disponible', 'Publicado', true, false, true, '300 L · Frío seco'],
+  ['Xiaomi', 'Smartphone 128 GB', '40125', 'Celulares & Tecnología', 1690000, 'Disponible', 'Publicado', true, true, true, '128 GB · 6 GB RAM'],
+  ['Philips', 'Freidora de aire 4,1 L', '50330', 'Cocina', 590000, 'Disponible', 'Publicado', true, true, false, '4,1 L'],
+  ['JBL', 'Parlante portátil', '10988', 'TV & Audio', 890000, 'Sin stock', 'Publicado', false, true, false, 'Bluetooth'],
+  ['Electrolux', 'Lavarropas 8 kg', '60217', 'Lavado', 3150000, 'Consultar', 'Borrador', false, false, false, '8 kg · Carga frontal'],
+  ['Remington', 'Afeitadora', '70144', 'Cuidado Personal', 290000, 'Disponible', 'Publicado', true, false, false, 'Recargable'],
+  ['Carrier', 'Aire acondicionado 18.000 BTU', '20590', 'Climatización', 5400000, 'Disponible', 'Oculto', false, false, false, '18.000 BTU · Inverter · Split']
+].map(([brand, name, code, cat, price, stock, web, img, desc, feat, spec]) => ({ brand, name, code, cat, price, stock, web, img, desc, feat, spec }));
+const ORDERS = [
+  { n: 'W-000128', cliente: 'María González', date: '05/10/2026', total: 4540000, pago: 'Pendiente', estado: 'Recibido' },
+  { n: 'W-000127', cliente: 'Carlos Benítez', date: '05/10/2026', total: 1690000, pago: 'Aprobado', estado: 'Preparando' },
+  { n: 'W-000126', cliente: 'Laura Giménez', date: '04/10/2026', total: 590000, pago: 'Rechazado', estado: 'Recibido' },
+  { n: 'W-000125', cliente: 'Jorge Ortiz', date: '04/10/2026', total: 3950000, pago: 'Aprobado', estado: 'Listo' },
+  { n: 'W-000124', cliente: 'Ana Duarte', date: '03/10/2026', total: 290000, pago: 'Cancelado', estado: 'Cancelado' },
+  { n: 'W-000123', cliente: 'Pedro Acosta', date: '02/10/2026', total: 2890000, pago: 'Aprobado', estado: 'Entregado' }
+];
+const PAY = { Pendiente: ['#fff', '#15171c', '#15171c'], Aprobado: ['#355DB4', '#fff', '#355DB4'], Rechazado: ['#15171c', '#fff', '#15171c'], Cancelado: ['#f1f2f4', '#5d626b', '#f1f2f4'] };
+const WEB = { Publicado: ['#eef2fa', '#284a93', '#eef2fa'], Borrador: ['#fff', '#15171c', '#c9ced8'], Oculto: ['#f1f2f4', '#5d626b', '#f1f2f4'] };
+const NAV = [['dash', 'Dashboard'], ['cat', 'Catálogo web'], ['prod', 'Producto'], ['home', 'Home'], ['orders', 'Pedidos']];
+
+class Component extends DCLogic {
+  state = { tab: 'dash', q: '', fState: 'all', edit: 0, feats: PRODUCTS.map(p => p.feat),
+    blocks: [['Hero · La casa Total', true], ['Categorías', true], ['¿Qué querés equipar?', true], ['Elegidos de Total', true], ['Beneficios', true], ['Ofertas', true], ['Marcas', true], ['Total para tu hogar + Redes', true]] };
+  move(i, d) { this.setState(s => { const b = [...s.blocks]; const j = i + d; if (j < 0 || j >= b.length) return null; [b[i], b[j]] = [b[j], b[i]]; return { blocks: b }; }); }
+  dd(key, opts, cur, pick) {
+    const open = this.state.dd === key, sel = opts.find(o => o[0] === cur) || opts[0];
+    return { open, label: sel[1], b: open ? '#355DB4' : '#c9ced8', rot: open ? 'rotate(180deg)' : 'none', toggle: () => this.setState({ dd: open ? null : key }),
+      opts: opts.map(([v, n]) => { const a = v === sel[0]; return { name: n, mark: a ? '✓' : '', bg: a ? '#f7f9fd' : '#fff', line: a ? '#355DB4' : 'transparent', w: a ? 700 : 500, c: a ? '#15171c' : '#4b505a', pick: () => { this.setState({ dd: null }); pick(v); } }; }) };
+  }
+  renderVals() {
+    const s = this.state;
+    const cats = ['Climatización', 'TV & Audio', 'Celulares & Tecnología', 'Refrigeración', 'Cocina', 'Lavado', 'Hogar', 'Dormitorio', 'Cuidado Personal', 'Deportes & Exterior'];
+    const epWeb = (s.webOv || {})[s.edit] || PRODUCTS[s.edit].web, epCat = (s.catOv || {})[s.edit] || PRODUCTS[s.edit].cat, f = s.feats[s.edit];
+    const extra = {
+      closeDD: () => this.setState({ dd: null }),
+      ddState: this.dd('state', [['all', 'Todos los estados'], ['Publicado', 'Publicado'], ['Borrador', 'Borrador'], ['Oculto', 'Oculto']], s.fState, v => this.setState({ fState: v })),
+      ddWeb: this.dd('web', ['Publicado', 'Borrador', 'Oculto'].map(x => [x, x]), epWeb, v => this.setState(st => ({ webOv: { ...(st.webOv || {}), [st.edit]: v } }))),
+      ddCat: this.dd('cat', cats.map(x => [x, x]), epCat, v => this.setState(st => ({ catOv: { ...(st.catOv || {}), [st.edit]: v } }))),
+      epBox: f ? { b: '#355DB4', bg: '#355DB4', mark: '✓' } : { b: '#c9ced8', bg: '#fff', mark: '' },
+      toggleEpFeat: e => { e.preventDefault(); this.setState(st => ({ feats: st.feats.map((v, j) => j === st.edit ? !v : v) })); }
+    };
+    return { ...extra, ...this.vals(s) };
+  }
+  vals(s) {
+    const ord = o => { const [bg, c, b] = PAY[o.pago]; return { ...o, totalFmt: fmt(o.total), bg, c, b }; };
+    const ep = PRODUCTS[s.edit];
+    const q = s.q.trim().toLowerCase();
+    return {
+      title: NAV.find(n => n[0] === s.tab)[1],
+      nav: NAV.map(([k, n]) => ({ name: n, bg: s.tab === k ? '#eef2fa' : 'transparent', line: s.tab === k ? '#355DB4' : 'transparent', w: s.tab === k ? 700 : 500, select: () => this.setState({ tab: k }) })),
+      isDash: s.tab === 'dash', isCat: s.tab === 'cat', isProd: s.tab === 'prod', isHome: s.tab === 'home', isOrders: s.tab === 'orders',
+      goOrders: () => this.setState({ tab: 'orders' }), goCat: () => this.setState({ tab: 'cat' }),
+      kpis: [
+        { label: 'Pedidos web', v: ORDERS.length, cta: 'Ver pedidos', go: () => this.setState({ tab: 'orders' }) },
+        { label: 'Productos visibles', v: PRODUCTS.filter(p => p.web === 'Publicado').length, cta: 'Ver catálogo', go: () => this.setState({ tab: 'cat', fState: 'Publicado' }) },
+        { label: 'Sin imagen', v: PRODUCTS.filter(p => !p.img).length, cta: 'Completar', go: () => this.setState({ tab: 'cat', fState: 'all' }) },
+        { label: 'Sin descripción', v: PRODUCTS.filter(p => !p.desc).length, cta: 'Completar', go: () => this.setState({ tab: 'cat', fState: 'all' }) },
+        { label: 'Bloques activos en Home', v: s.blocks.filter(b => b[1]).length, cta: 'Editar Home', go: () => this.setState({ tab: 'home' }) }
+      ],
+      ordersTop: ORDERS.slice(0, 4).map(ord), orders: ORDERS.map(ord),
+      consultas: [{ canal: 'WhatsApp', t: 'hace 12 min', prod: 'JBL Parlante portátil · disponibilidad' }, { canal: 'WhatsApp', t: 'hace 1 h', prod: 'Electrolux Lavarropas 8 kg · precio' }, { canal: 'Correo', t: 'ayer', prod: 'Consulta general' }],
+      q: s.q, onQ: e => this.setState({ q: e.target.value }), fState: s.fState, onFState: e => this.setState({ fState: e.target.value }),
+      rows: PRODUCTS.map((p, i) => ({ p, i })).filter(({ p }) => (s.fState === 'all' || p.web === s.fState) && (!q || (p.brand + ' ' + p.name + ' ' + p.code).toLowerCase().includes(q))).map(({ p, i }) => {
+        const [sbg, sc, sb] = WEB[p.web]; const f = s.feats[i];
+        return { ...p, sbg, sc, sb, imgBg: p.img ? 'repeating-linear-gradient(135deg,#f3f5f8 0 5px,#eaedf2 5px 10px)' : '#fff', imgB: p.img ? 'transparent' : '#c9ced8', imgTxt: p.img ? '' : 'falta',
+          descNote: p.desc ? p.spec : 'Sin descripción', featBg: f ? '#355DB4' : '#c9ced8', featX: f ? '19px' : '3px',
+          toggleFeat: () => this.setState(st => ({ feats: st.feats.map((v, j) => j === i ? !v : v) })), edit: () => this.setState({ tab: 'prod', edit: i }) };
+      }),
+      ep: { ...ep, fullName: ep.brand + ' ' + ep.name, slug: slug(ep.brand + ' ' + ep.name), specLines: ep.spec.split(' · ').join('\n'), seoTitle: ep.brand + ' ' + ep.name + ' | Total Electrodomésticos', priceFmt: fmt(ep.price), stockLabel: ep.stock, feat: s.feats[s.edit] },
+      blocks: s.blocks.map(([n, v], i) => ({ name: n, note: v ? 'Visible' : 'Oculto', c: v ? '#15171c' : '#9aa0aa', bg: v ? '#355DB4' : '#c9ced8', x: v ? '19px' : '3px',
+        toggle: () => this.setState(st => ({ blocks: st.blocks.map((b, j) => j === i ? [b[0], !b[1]] : b) })), up: () => this.move(i, -1), down: () => this.move(i, 1) })),
+      zones: ['Living', 'Cocina', 'Dormitorio', 'Escritorio', 'Altillo']
+    };
+  }
+}
+</script>
+</body>
+</html>

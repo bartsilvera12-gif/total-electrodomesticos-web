@@ -1,0 +1,12 @@
+# Catálogo con costos internos — NUNCA versionar
+*.xls
+*.xlsx
+*.csv
+LISTA DE PRODUCTOS*
+lista-de-productos*
+
+.DS_Store
+node_modules/
+.env
+.env.*
+.vercel
