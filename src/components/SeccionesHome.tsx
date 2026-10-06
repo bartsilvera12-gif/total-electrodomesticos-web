@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ESPACIOS, LOGOS_MARCA, MARCAS, RUBROS } from '@/lib/catalogo/mock';
 import { BENEFICIOS, SITIO } from '@/lib/sitio';
 import { slugificar } from '@/lib/formato';
+import { Revelar } from './Revelar';
 
 /**
  * Categorías.
@@ -18,6 +19,7 @@ export function Categorias() {
 
   return (
     <section className="mx-auto max-w-[1400px] px-6 py-16">
+      <Revelar>
       <h2 className="max-w-xl text-[clamp(26px,3vw,38px)] leading-tight font-bold tracking-tight">
         Todo empieza por lo que necesitás.
       </h2>
@@ -28,6 +30,7 @@ export function Categorias() {
           <Link
             key={r.id}
             href={`/categoria/${r.slug}`}
+            data-revelar-item
             className={`group flex min-h-44 flex-col justify-between bg-white p-6 transition-colors hover:bg-total-50 ${
               i === 0 ? 'md:col-span-2 md:row-span-2 md:min-h-96' : ''
             }`}
@@ -48,6 +51,7 @@ export function Categorias() {
       <Link href="/categorias" className="mt-6 inline-block text-sm font-semibold text-total-500 hover:underline">
         Ver todas las categorías →
       </Link>
+      </Revelar>
     </section>
   );
 }
@@ -56,7 +60,7 @@ export function Categorias() {
 export function Espacios() {
   return (
     <section className="border-y border-linea bg-total-50">
-      <div className="mx-auto max-w-[1400px] px-6 py-16">
+      <Revelar className="mx-auto max-w-[1400px] px-6 py-16">
         <h2 className="text-[clamp(26px,3vw,38px)] leading-tight font-bold tracking-tight">
           ¿Qué querés equipar?
         </h2>
@@ -69,6 +73,7 @@ export function Espacios() {
             <Link
               key={e.slug}
               href={`/espacio/${e.slug}`}
+              data-revelar-item
               className="group relative flex min-h-56 flex-col justify-end overflow-hidden bg-white p-5"
             >
               {e.foto ? (
@@ -92,7 +97,7 @@ export function Espacios() {
             </Link>
           ))}
         </div>
-      </div>
+      </Revelar>
     </section>
   );
 }
@@ -132,14 +137,14 @@ export function Marcas() {
 export function Beneficios() {
   return (
     <section className="mx-auto max-w-[1400px] px-6 py-14">
-      <div className="grid divide-y divide-linea border-y border-linea sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
+      <Revelar className="grid divide-y divide-linea border-y border-linea sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
         {BENEFICIOS.map((b) => (
-          <div key={b.titulo} className="px-0 py-6 sm:px-6">
+          <div key={b.titulo} data-revelar-item className="px-0 py-6 sm:px-6">
             <h3 className="text-base font-bold">{b.titulo}</h3>
             <p className="mt-1.5 text-sm text-humo">{b.texto}</p>
           </div>
         ))}
-      </div>
+      </Revelar>
     </section>
   );
 }
@@ -147,7 +152,7 @@ export function Beneficios() {
 export function Institucional() {
   return (
     <section className="mx-auto max-w-[1400px] px-6 pb-16">
-      <div className="grid gap-10 border border-linea p-8 md:grid-cols-2 md:p-12">
+      <Revelar className="grid gap-10 border border-linea p-8 md:grid-cols-2 md:p-12">
         <div>
           <h2 className="text-[clamp(24px,2.5vw,32px)] font-bold tracking-tight">
             Total para tu hogar
@@ -171,7 +176,7 @@ export function Institucional() {
             </a>
           </div>
         </div>
-      </div>
+      </Revelar>
     </section>
   );
 }

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { PRODUCTOS, RUBROS } from '@/lib/catalogo/mock';
 import { SITIO } from '@/lib/sitio';
 import { slugificar } from '@/lib/formato';
-import { LineasWhatsapp } from './ConsultarWhatsapp';
+import { ConsultarWhatsapp, LineasWhatsapp } from './ConsultarWhatsapp';
 import { useTienda } from '@/lib/tienda/contexto';
 import { Buscador } from './Buscador';
 import { CarritoLateral } from './CarritoLateral';
@@ -50,17 +50,6 @@ export function Encabezado() {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-linea bg-white" onMouseLeave={() => setMega(false)}>
-        <div className="bg-total-500 text-[13px] text-white">
-          <div className="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4 px-6 py-2">
-            <span>Comprá online · Consultá por WhatsApp · Atención personalizada</span>
-            <div className="hidden items-center gap-5 md:flex">
-              <LineasWhatsapp className="font-semibold hover:underline" />
-              <a href={SITIO.instagram} target="_blank" rel="noopener noreferrer" className="opacity-90 hover:underline">Instagram</a>
-              <a href={SITIO.facebook} target="_blank" rel="noopener noreferrer" className="opacity-90 hover:underline">Facebook</a>
-            </div>
-          </div>
-        </div>
-
         <div className="mx-auto flex max-w-[1400px] items-center gap-4 px-6 py-3.5">
           <Link href="/" aria-label={`${SITIO.nombre} — Inicio`} className="shrink-0">
             <Image src="/assets/logo-total.png" alt={SITIO.nombre} width={160} height={46} priority className="h-11 w-auto" />
@@ -109,6 +98,16 @@ export function Encabezado() {
                 </span>
               )}
             </Link>
+
+            <ConsultarWhatsapp
+              alineacion="derecha"
+              className="hidden cursor-pointer items-center gap-2 p-2.5 text-sm hover:text-total-500 sm:flex"
+            >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3.5 20.5l1.3-4.1A8.6 8.6 0 1 1 8 19.3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+              </svg>
+              <span className="hidden lg:block">WhatsApp</span>
+            </ConsultarWhatsapp>
 
             <Link href={sesion ? '/cuenta' : '/ingresar'} className="flex items-center gap-2 p-2.5 text-sm hover:text-total-500">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -185,6 +184,10 @@ export function Encabezado() {
               <Link href="/favoritos" className="py-3.5 text-[15px] font-semibold">
                 Favoritos {favoritos.length > 0 && `(${favoritos.length})`}
               </Link>
+              <div className="flex flex-col gap-2 py-3.5 text-sm">
+                <span className="font-semibold">WhatsApp</span>
+                <LineasWhatsapp className="text-grafito hover:text-total-500" />
+              </div>
             </nav>
           </div>
         )}

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Producto } from '@/lib/catalogo/tipos';
+import { Revelar } from './Revelar';
 import { TarjetaProducto } from './TarjetaProducto';
 
 export function FilaProductos({
@@ -26,13 +27,13 @@ export function FilaProductos({
           </Link>
         )}
       </div>
-      <div className="mt-8 grid grid-cols-2 gap-px bg-linea lg:grid-cols-4">
+      <Revelar className="mt-8 grid grid-cols-2 gap-px bg-linea lg:grid-cols-4">
         {productos.map((p) => (
-          <div key={p.id} className="bg-white">
+          <div key={p.id} data-revelar-item className="bg-white">
             <TarjetaProducto producto={p} />
           </div>
         ))}
-      </div>
+      </Revelar>
     </section>
   );
 }
