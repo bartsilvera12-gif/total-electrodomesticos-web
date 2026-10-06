@@ -28,6 +28,16 @@ export function Encabezado() {
   const [buscar, setBuscar] = useState(false);
   const [carrito, setCarrito] = useState(false);
   const [menu, setMenu] = useState(false);
+  // La tecla del atajo depende del sistema: ⌘ en Mac, Ctrl en Windows/Linux.
+  // Se resuelve en el cliente; hasta entonces no se muestra, para no
+  // renderizar "⌘K" en el servidor y que la hidratación no coincida.
+  const [atajo, setAtajo] = useState<string | null>(null);
+
+  useEffect(() => {
+    const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+    const plataforma = nav.userAgentData?.platform || nav.platform || nav.userAgent;
+    setAtajo(/mac|iphone|ipad/i.test(plataforma) ? '⌘K' : 'Ctrl K');
+  }, []);
 
   // ⌘K / Ctrl+K abre el buscador desde cualquier pantalla
   useEffect(() => {
@@ -55,14 +65,14 @@ export function Encabezado() {
             <Image src="/assets/logo-total.png" alt={SITIO.nombre} width={160} height={46} priority className="h-11 w-auto" />
           </Link>
 
-          <nav aria-label="Principal" className="hidden min-w-0 flex-1 justify-center lg:flex">
+          <nav aria-label="Principal" className="hidden min-w-0 flex-1 justify-center lg:ml-4 lg:flex min-[1360px]:ml-8">
             {NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onMouseEnter={() => setMega(Boolean(item.mega))}
                 aria-expanded={item.mega ? mega : undefined}
-                className={`border-b-2 px-3 pt-2.5 pb-2 text-[15px] transition-colors ${
+                className={`whitespace-nowrap border-b-2 px-2 pt-2.5 pb-2 text-[14px] transition-colors min-[1360px]:px-3 min-[1360px]:text-[15px] ${
                   activo(item.href)
                     ? 'border-total-500 font-semibold text-total-500'
                     : 'border-transparent hover:text-total-500'
@@ -79,13 +89,16 @@ export function Encabezado() {
               type="button"
               onClick={() => setBuscar(true)}
               aria-label="Buscar"
-              className="flex items-center gap-2.5 rounded-md border border-linea bg-fondo px-3 py-2.5 text-sm text-humo transition-colors hover:border-total-500 sm:w-56"
+              className="flex items-center gap-2.5 rounded-md border border-linea bg-fondo px-3 py-2.5 text-sm text-humo transition-colors hover:border-total-500 sm:w-44 lg:w-auto min-[1360px]:w-56"
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="21" y2="21" />
               </svg>
-              <span className="hidden flex-1 text-left sm:block">Buscar</span>
-              <kbd className="hidden rounded border border-[#d4d8df] bg-white px-1.5 py-0.5 font-mono text-[11px] sm:block">⌘K</kbd>
+              {/* Entre 1024 y 1360 el menú ocupa casi todo el ancho: ahí el buscador queda en ícono */}
+              <span className="hidden flex-1 text-left sm:block lg:hidden min-[1360px]:block">Buscar</span>
+              {atajo && (
+                <kbd className="hidden whitespace-nowrap rounded border border-[#d4d8df] bg-white px-1.5 py-0.5 font-mono text-[11px] min-[1360px]:block">{atajo}</kbd>
+              )}
             </button>
 
             <Link href="/favoritos" aria-label="Favoritos" className="relative hidden p-2.5 hover:text-total-500 sm:block">
@@ -106,14 +119,14 @@ export function Encabezado() {
               <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path d="M3.5 20.5l1.3-4.1A8.6 8.6 0 1 1 8 19.3z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
               </svg>
-              <span className="hidden lg:block">WhatsApp</span>
+              <span className="hidden min-[1360px]:block">WhatsApp</span>
             </ConsultarWhatsapp>
 
             <Link href={sesion ? '/cuenta' : '/ingresar'} className="flex items-center gap-2 p-2.5 text-sm hover:text-total-500">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <circle cx="12" cy="8" r="4" /><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" />
               </svg>
-              <span className="hidden lg:block">{sesion ? sesion.nombre : 'Ingresar'}</span>
+              <span className="hidden min-[1360px]:block">{sesion ? sesion.nombre : 'Ingresar'}</span>
             </Link>
 
             <button
@@ -149,18 +162,18 @@ export function Encabezado() {
             className="absolute inset-x-0 top-full hidden border-t border-linea bg-white shadow-lg lg:block"
             onMouseLeave={() => setMega(false)}
           >
-            <div className="mx-auto grid max-w-[1400px] grid-cols-5 gap-x-8 gap-y-7 px-6 py-8">
+            <div className="mx-auto grid max-w-[1400px] grid-cols-5 gap-x-6 gap-y-4 px-6 py-5">
               {RUBROS.map((r) => (
                 <div key={r.id}>
-                  <Link href={`/categoria/${r.slug}`} className="text-sm font-bold hover:text-total-500">
+                  <Link href={`/categoria/${r.slug}`} className="text-[13px] font-bold hover:text-total-500">
                     {r.nombre}
                   </Link>
-                  <ul className="mt-2.5 flex flex-col gap-1.5">
+                  <ul className="mt-1 flex flex-col gap-0.5">
                     {r.subcategorias.map((s) => (
                       <li key={s}>
                         <Link
                           href={`/categoria/${slugificar(s)}`}
-                          className="text-[13px] text-grafito hover:text-total-500"
+                          className="block text-[12.5px] leading-snug text-grafito hover:text-total-500"
                         >
                           {s}
                         </Link>
