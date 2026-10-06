@@ -13,9 +13,6 @@ import { Revelar } from './Revelar';
  * La geometría del logo —la casa con la T— se usa como sistema editorial, no
  * como dibujo. Cada zona es un universo del catálogo y responde al cursor.
  * Nada de carrusel de banners ni hero partido en dos.
- *
- * El alto mira el ancho y el alto disponibles, para que la casa no se corte
- * contra el borde inferior en monitores anchos pero bajos.
  */
 
 const PASO = 56;
@@ -236,7 +233,7 @@ export function HeroCasa() {
         <div
           data-revelar-item
           className="relative hidden lg:block"
-          style={{ height: 'clamp(480px, min(46vw, 100vh - 230px), 660px)' }}
+          style={{ height: 'clamp(520px, 46vw, 660px)' }}
         >
           <div className="absolute top-[7%] right-[16%] h-[20%] w-[6%] bg-total-500" />
 
