@@ -23,15 +23,6 @@ const PASO = 56;
 /** Silueta de la casa */
 const CASA = 'polygon(50% 0, 100% 33%, 100% 100%, 0 100%, 0 33%)';
 
-/**
- * La misma silueta, metida hacia adentro. El azul que queda entre las dos es el
- * marco de la casa: sin esto el techo pierde su línea y se lee como una mancha.
- * El vértice baja más que el borde porque en un ángulo agudo la intersección de
- * dos lados desplazados se corre bastante más que el desplazamiento.
- */
-const CASA_INTERIOR =
-  'polygon(50% 11px, calc(100% - 9px) 34.2%, calc(100% - 9px) calc(100% - 9px), 9px calc(100% - 9px), 9px 34.2%)';
-
 /** Celdas del plano que titilan, en coordenadas de retícula */
 const CELDAS = [
   [3, 2], [5, 1], [8, 3], [11, 2], [14, 1], [17, 4], [20, 2], [2, 6], [9, 7],
@@ -249,15 +240,11 @@ export function HeroCasa() {
         >
           <div className="absolute top-[7%] right-[16%] h-[20%] w-[6%] bg-total-500" />
 
-          {/* Capa azul: es lo que se ve como marco y como línea del techo */}
-          <div className="absolute inset-0 bg-total-500" style={{ clipPath: CASA }} />
-
-          {/* Habitaciones, recortadas un poco más adentro */}
           <div
-            className="absolute inset-0 flex flex-col gap-[5px]"
-            style={{ clipPath: CASA_INTERIOR }}
+            className="absolute inset-0 flex flex-col gap-[5px] bg-total-500 p-[5px]"
+            style={{ clipPath: CASA }}
           >
-            <div className="flex shrink-0 basis-[33%] gap-[5px]">
+            <div className="flex shrink-0 basis-[calc(33%-5px)] gap-[5px]">
               <Zona z={ZONAS_HERO[0]} centrado />
             </div>
             <div
