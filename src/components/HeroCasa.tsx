@@ -261,6 +261,32 @@ export function HeroCasa() {
               <Zona z={ZONAS_HERO[4]} activa={zona === ZONAS_HERO[4].id} alActivar={() => setZona(ZONAS_HERO[4].id)} />
             </div>
           </div>
+
+          {/*
+            La línea del techo.
+
+            Las paredes y el piso muestran el azul del padding, pero la diagonal
+            no: el recorte pasa justo por el borde de la foto y no deja nada. Se
+            dibuja encima en vez de achicar la casa. El trazo va centrado en la
+            línea y el mismo recorte se come la mitad de afuera, así que adentro
+            quedan los 5px que tiene el resto. non-scaling-stroke mantiene el
+            grosor parejo aunque el viewBox se estire.
+          */}
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            className="pointer-events-none absolute inset-0 size-full"
+            style={{ clipPath: CASA }}
+          >
+            <polyline
+              points="0,33 50,0 100,33"
+              fill="none"
+              stroke="#355DB4"
+              strokeWidth="10"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
         </div>
 
         {/* En mobile no se comprime la casa: se recorre como carrusel de universos */}
