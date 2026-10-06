@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  /* Azul institucional del logo. Es el color protagonista: no agregar
+     naranja, rojo, verde, violeta ni amarillo como colores de marca. */
+  --color-total-50: #f7f9fd;
+  --color-total-100: #eef2fa;
+  --color-total-200: #dfe6f3;
+  --color-total-300: #c9d4ec;
+  --color-total-400: #9fb3dd;
+  --color-total-500: #355db4;
+  --color-total-600: #284a93;
+  --color-total-700: #1f3b76;
+
+  /* Neutros, solo como soporte de lectura y estructura */
+  --color-carbon: #15171c;
+  --color-grafito: #4b505a;
+  --color-humo: #6b7079;
+  --color-linea: #e3e6eb;
+  --color-linea-suave: #e8ecf4;
+  --color-fondo: #f5f6f8;
+
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #fff;
+  color: var(--color-carbon);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-total-500);
+  outline-offset: 2px;
+}
+
+/* La marquesina de marcas y los esqueletos de carga */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes pulso { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+.animate-marquee { animation: marquee 42s linear infinite; }
+.animate-pulso { animation: pulso 1.1s ease-in-out infinite; }
+.animate-girar { animation: girar 0.9s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

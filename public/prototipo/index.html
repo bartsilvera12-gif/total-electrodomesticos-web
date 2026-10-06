@@ -44,7 +44,7 @@ button,input,select{font-family:inherit}
 
   <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
     <div style="max-width:1400px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:16px;">
-      <img src="assets/logo-total.png" alt="TOTAL Electrodomésticos" onClick="{{ goHome }}" style="height:46px;width:auto;cursor:pointer;display:block;flex-shrink:0;">
+      <img src="/assets/logo-total.png" alt="TOTAL Electrodomésticos" onClick="{{ goHome }}" style="height:46px;width:auto;cursor:pointer;display:block;flex-shrink:0;">
       <nav aria-label="Principal" style="display:flex;gap:0;align-items:center;flex:1;justify-content:center;min-width:0;">
         <button onClick="{{ goHome }}" style="background:none;border:0;border-bottom:2px solid {{ nv.home.line }};padding:10px 12px 8px;font-size:15px;font-weight:{{ nv.home.w }};color:{{ nv.home.c }};cursor:pointer;" style-hover="color:#355DB4;">Inicio</button>
         <button onClick="{{ goCatalog }}" style="background:none;border:0;border-bottom:2px solid {{ nv.prod.line }};padding:10px 12px 8px;font-size:15px;font-weight:{{ nv.prod.w }};color:{{ nv.prod.c }};cursor:pointer;" style-hover="color:#355DB4;">Productos</button>
@@ -72,7 +72,7 @@ button,input,select{font-family:inherit}
 
   <sc-if value="{{ mob }}" hint-placeholder-val="{{ false }}">
     <div style="padding:10px 16px;display:flex;align-items:center;gap:4px;">
-      <img src="assets/logo-total.png" alt="TOTAL Electrodomésticos" onClick="{{ goHome }}" style="height:36px;width:auto;margin-right:auto;">
+      <img src="/assets/logo-total.png" alt="TOTAL Electrodomésticos" onClick="{{ goHome }}" style="height:36px;width:auto;margin-right:auto;">
       <button onClick="{{ openSearch }}" aria-label="Buscar" style="width:44px;height:44px;background:none;border:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15171c" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg></button>
       <button onClick="{{ goAccount }}" aria-label="Cuenta" style="width:44px;height:44px;background:none;border:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15171c" stroke-width="1.8"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 4-6 8-6s8 2 8 6"></path></svg></button>
       <button onClick="{{ openCart }}" aria-label="Carrito" style="height:44px;padding:0 8px;background:none;border:0;display:flex;align-items:center;gap:4px;font-weight:700;font-size:13px;color:#15171c;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15171c" stroke-width="1.8"><path d="M5 8h14l-1.4 12H6.4z"></path><path d="M9 8a3 3 0 0 1 6 0"></path></svg>{{ cartCount }}</button>
@@ -795,7 +795,7 @@ button,input,select{font-family:inherit}
 <sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ false }}">
   <div style="border-bottom:1px solid #e3e6eb;">
     <div style="max-width:1160px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;">
-      <img src="assets/logo-total.png" alt="TOTAL Electrodomésticos" style="height:38px;">
+      <img src="/assets/logo-total.png" alt="TOTAL Electrodomésticos" style="height:38px;">
       <div style="display:flex;gap:18px;align-items:center;font-size:14px;"><span style="color:#6b7079;">Pago con PagoPar</span><button onClick="{{ backToCart }}" style="background:none;border:0;font-size:14px;font-weight:600;color:#355DB4;cursor:pointer;">Volver al carrito</button></div>
     </div>
   </div>
@@ -1048,7 +1048,7 @@ button,input,select{font-family:inherit}
 <footer style="background:#f7f8fa;">
   <div style="max-width:1400px;margin:0 auto;padding:56px 24px 28px;display:flex;flex-wrap:wrap;gap:40px;">
     <div style="flex:1.2 1 260px;display:flex;flex-direction:column;gap:16px;">
-      <div style="background:#fff;align-self:flex-start;padding:10px 12px;"><img src="assets/logo-total.png" alt="TOTAL Electrodomésticos" style="height:44px;display:block;"></div>
+      <div style="background:#fff;align-self:flex-start;padding:10px 12px;"><img src="/assets/logo-total.png" alt="TOTAL Electrodomésticos" style="height:44px;display:block;"></div>
       <p style="margin:0;font-size:14px;color:#4b505a;line-height:1.55;max-width:300px;">Tecnología, electrodomésticos, muebles y productos para cada espacio de tu hogar.</p>
     </div>
     <div style="flex:1 1 180px;display:flex;flex-direction:column;gap:8px;font-size:14px;">
@@ -1161,7 +1161,7 @@ button,input,select{font-family:inherit}
 <!-- MOBILE MENU -->
 <sc-if value="{{ menuShow }}" hint-placeholder-val="{{ false }}">
   <div style="position:fixed;inset:0;background:#fff;z-index:95;overflow:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid #e3e6eb;"><img src="assets/logo-total.png" alt="TOTAL" style="height:36px;"><button onClick="{{ closeMenu }}" aria-label="Cerrar" style="width:44px;height:44px;background:none;border:0;font-size:28px;">×</button></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid #e3e6eb;"><img src="/assets/logo-total.png" alt="TOTAL" style="height:36px;"><button onClick="{{ closeMenu }}" aria-label="Cerrar" style="width:44px;height:44px;background:none;border:0;font-size:28px;">×</button></div>
     <div style="padding:8px 16px 32px;">
       <sc-for list="{{ groups }}" as="g" hint-placeholder-count="10">
         <div style="border-bottom:1px solid #e3e6eb;">
@@ -1266,7 +1266,7 @@ const ROOMS = [
   { name: 'Exterior', gs: ['ext'], subs: [['Bicicletas', 'ext'], ['Piscinas', 'ext'], ['Recreación', 'ext']], img: 'foto: patio con piscina', desc: 'Recreación y productos para el patio.' }
 ];
 const WM = f => 'https://commons.wikimedia.org/wiki/Special:FilePath/' + encodeURIComponent(f);
-const BL = n => 'assets/brands/' + n + '.svg';
+const BL = n => '/assets/brands/' + n + '.svg';
 const BLOGO = { Samsung: [BL('samsung'), '24px'], Philips: [BL('philips'), '26px'], JBL: [BL('jbl'), '52px'], Xiaomi: [BL('xiaomi'), '46px'], Electrolux: [BL('electrolux'), '22px'], Remington: [BL('remington'), '26px'], Midea: [BL('midea'), '38px'], Babyliss: [BL('babyliss'), '26px'] };
 const BTYPE = { Tokyo: ['.18em', 'uppercase', 'normal'], Carrier: ['-.01em', 'none', 'italic'], Goodweather: ['-.03em', 'none', 'normal'], Tramontina: ['.04em', 'uppercase', 'normal'] };
 const BRANDS = ['Samsung', 'Philips', 'Tokyo', 'Midea', 'Carrier', 'Goodweather', 'JBL', 'Xiaomi', 'Electrolux', 'Remington', 'Babyliss', 'Tramontina'];

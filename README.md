@@ -1,64 +1,95 @@
 # Total Electrodomésticos — Web
 
-Tienda online de Total Electrodomésticos. **Etapa actual: prototipo visual aprobable por el cliente.**
+Tienda online de Total Electrodomésticos. Next.js + TypeScript + Tailwind.
 
-## Qué hay acá
+El ERP vive en [`neura-erp-total`](https://github.com/bartsilvera12-gif/neura-erp-total)
+y es la etapa 2. Esta web está hecha desacoplada, esperándolo.
 
-Dos prototipos estáticos generados con Claude Design. No hay build: es HTML + un runtime (`support.js`) que carga React desde unpkg y renderiza el template.
-
-| Archivo | Qué es |
-| --- | --- |
-| `index.html` | La tienda completa (13 pantallas, navegación por hash) |
-| `admin.html` | El panel web (dashboard, catálogo, producto, home, pedidos) |
-| `support.js` | Runtime de Claude Design (generado, no editar a mano) |
-| `assets/` | Logo y logotipos de marcas |
-
-Para verlo en local hace falta servirlo por HTTP (no abrir el archivo directo, el runtime no levanta desde `file://`):
+## Arrancar
 
 ```bash
-python3 -m http.server 8787
+npm install
+npm run dev
 ```
 
-Y entrar a http://localhost:8787
+## Cómo está armado
 
-## Navegación
+```
+src/lib/catalogo/     tipos, mock y servicio del catálogo
+src/lib/tienda/       carrito, sesión y pedidos
+src/components/       UI de la tienda
+src/components/admin/ panel web
+src/app/              rutas
+```
 
-La tienda rutea por hash: `#/productos`, `#/categoria/televisores`, `#/marca/samsung`,
-`#/producto/<slug>`, `#/ofertas`, `#/novedades`, `#/checkout`, `#/confirmacion`,
-`#/ingresar`, `#/cuenta`. Abajo a la izquierda hay un selector de pantalla para saltar
-entre las 13 vistas durante el QA.
+### La capa que se cambia cuando llegue el ERP
+
+`src/lib/catalogo/servicio.ts` es el único punto por donde la web lee productos.
+Hoy resuelve contra un mock en memoria; cuando exista el ERP se reimplementa ahí
+contra su base y ningún componente se entera. Todo devuelve promesas aunque hoy
+sean síncronas, para que la firma ya sea la que va a necesitar la integración.
+
+`src/lib/tienda/almacenamiento.ts` es la otra. Mientras no haya base de datos, el
+carrito, la sesión y los pedidos viven en `localStorage`. Es a propósito la única
+capa que sabe eso.
+
+### Qué controla cada sistema
+
+El ERP es la fuente de verdad de producto, precio, stock, cliente, pedido, venta
+y factura. La web solo manda en lo editorial: imágenes, descripciones
+comerciales, destacados, orden de la home y SEO. El panel web muestra los campos
+del ERP marcados como solo lectura, para no construir una segunda lógica que
+después entre en conflicto.
+
+## Qué funciona de verdad
+
+- **Carrito** — arranca vacío, persiste entre recargas, suma y resta unidades
+- **Login y registro** — guarda la sesión con los datos que la persona ingresa
+- **Checkout** — valida los campos, captura cliente y entrega
+- **PagoPar** — flujo completo con los cinco estados. La pasarela está simulada:
+  la integración real va con las claves del comercio
+- **Pedidos** — se crean de verdad, numerados, y aparecen en Mi cuenta y en el panel
+- **Catálogo** — filtros por categoría, marca, precio, disponibilidad, y filtros
+  técnicos por rubro (pulgadas en TV, BTU en climatización, capacidad en heladeras)
+- **Buscador** — ⌘K, instantáneo, por nombre, marca, subcategoría y código
+- **Favoritos** — persisten, con su propia página
+- **SEO** — metadata por ruta, Open Graph, canonical, sitemap, robots y datos
+  estructurados de producto
 
 ## Datos
 
-**Todo es mock.** 14 productos de ejemplo definidos dentro de `index.html`. El catálogo real
-(~3.400 artículos) todavía no está cargado y **no se versiona en este repo**: el archivo trae
-una columna `COSTO` que es información interna y no puede salir en la web ni quedar en git.
+**14 productos de ejemplo**, en `src/lib/catalogo/mock.ts`.
 
-## El ERP no está conectado
-
-El ERP vive en `neura-erp-total` y se trabaja en una segunda etapa. En esta web no hay
-integración, endpoints, sincronización, lógica de stock ni facturación. Los estados de
-producto, pedido y pago son interfaz, no lógica.
+El catálogo real son ~3.400 artículos y no está acá: el brief pide no cargar todo
+el catálogo en el cliente, y el archivo de origen trae una columna `COSTO` que es
+información interna. **El `.gitignore` bloquea `.xls`, `.xlsx` y `.csv`** — este
+repo es público.
 
 ## Qué falta
 
-Relevado sobre el prototipo:
+- Backend: base con schema propio, autenticación real, pedidos del lado del servidor
+- Integración con el ERP
+- PagoPar productivo
+- Fotos de producto: hoy son marcadores con la descripción, no fotos de stock
+  que no corresponden al artículo
+- Panel web: login, detalle de pedido, banners, orden de categorías, SEO global, marcas
 
-- El botón flotante de WhatsApp es verde y grande; tiene que ser chico y en azul Total
-- "Marcas" no está en el nav principal y no hay página de marca propia
-- Favoritos está a medias: hay corazón en las cards, falta acceso y listado
-- Las fotos de producto son placeholders
-- Falta el tramo tablet (hoy hay un solo corte, en 760px)
-- Falta estado de error de carga de catálogo
-- El panel web está mucho menos desarrollado que la tienda: falta login, detalle de pedido,
-  banners, orden de categorías, SEO global, marcas, usuarios y permisos
-- Nada de SEO real todavía (metadata, Open Graph, sitemap, robots, canonical)
+## El prototipo original
+
+El diseño aprobado en Claude Design quedó en `public/prototipo/` para comparar:
+[/prototipo/index.html](public/prototipo/index.html) y
+[/prototipo/admin.html](public/prototipo/admin.html). No se toca.
 
 ## Despliegue
 
-- **Vercel** — pruebas y aprobación del cliente. Sitio estático, sin build.
-- **Hostinger** — producción, vía git desde la rama `master`. Hay que pushear a `main` y a
-  `master`: Hostinger despliega desde `master`.
+- **Vercel** — pruebas y aprobación del cliente, con auto-deploy desde `main`
+- **Hostinger** — producción, vía git desde `master`
+
+Hay que pushear a las dos ramas:
+
+```bash
+git push origin main && git push origin main:master
+```
 
 No pasar a producción antes de validar en Vercel.
 
