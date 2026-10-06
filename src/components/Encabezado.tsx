@@ -28,16 +28,6 @@ export function Encabezado() {
   const [buscar, setBuscar] = useState(false);
   const [carrito, setCarrito] = useState(false);
   const [menu, setMenu] = useState(false);
-  // La tecla del atajo depende del sistema: ⌘ en Mac, Ctrl en Windows/Linux.
-  // Se resuelve en el cliente; hasta entonces no se muestra, para no
-  // renderizar "⌘K" en el servidor y que la hidratación no coincida.
-  const [atajo, setAtajo] = useState<string | null>(null);
-
-  useEffect(() => {
-    const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
-    const plataforma = nav.userAgentData?.platform || nav.platform || nav.userAgent;
-    setAtajo(/mac|iphone|ipad/i.test(plataforma) ? '⌘K' : 'Ctrl K');
-  }, []);
 
   // ⌘K / Ctrl+K abre el buscador desde cualquier pantalla
   useEffect(() => {
@@ -89,16 +79,18 @@ export function Encabezado() {
               type="button"
               onClick={() => setBuscar(true)}
               aria-label="Buscar"
-              className="flex items-center gap-2.5 rounded-md border border-linea bg-fondo px-3 py-2.5 text-sm text-humo transition-colors hover:border-total-500 sm:w-44 lg:w-auto min-[1360px]:w-56"
+              className="flex items-center gap-2.5 rounded-md border border-linea bg-fondo px-3 py-2.5 text-sm text-humo transition-colors hover:border-total-500 sm:max-lg:w-44 lg:max-[1359px]:w-auto min-[1360px]:w-[200px]"
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <circle cx="11" cy="11" r="7" /><line x1="16.5" y1="16.5" x2="21" y2="21" />
               </svg>
-              {/* Entre 1024 y 1360 el menú ocupa casi todo el ancho: ahí el buscador queda en ícono */}
-              <span className="hidden flex-1 text-left sm:block lg:hidden min-[1360px]:block">Buscar</span>
-              {atajo && (
-                <kbd className="hidden whitespace-nowrap rounded border border-[#d4d8df] bg-white px-1.5 py-0.5 font-mono text-[11px] min-[1360px]:block">{atajo}</kbd>
-              )}
+              {/*
+                Entre 1024 y 1360 el menú ocupa casi todo el ancho: ahí el buscador queda en
+                lupa sola. Va como rango cerrado (lg:max-[1359px]) y no como lg:hidden +
+                min-[1360px]:block, porque en el CSS generado lg:hidden quedaba después y
+                ganaba: arriba de 1360 se veía la caja angosta sin la palabra "Buscar".
+              */}
+              <span className="hidden flex-1 text-left sm:block lg:max-[1359px]:hidden">Buscar</span>
             </button>
 
             <Link href="/favoritos" aria-label="Favoritos" className="relative hidden p-2.5 hover:text-total-500 sm:block">
