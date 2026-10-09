@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { RUBROS } from '@/lib/catalogo/mock';
 import { SITIO } from '@/lib/sitio';
+import type { Rubro } from '@/lib/catalogo/tipos';
 import { LineasWhatsapp } from './ConsultarWhatsapp';
 
-export function Pie() {
+export function Pie({ rubros }: { rubros: Rubro[] }) {
   return (
     <footer className="mt-20 border-t border-linea bg-total-50">
       <div className="mx-auto grid max-w-[1400px] gap-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-4">
@@ -19,7 +19,7 @@ export function Pie() {
         <div>
           <h2 className="text-sm font-bold">Categorías</h2>
           <ul className="mt-3 flex flex-col gap-2">
-            {RUBROS.slice(0, 6).map((r) => (
+            {rubros.slice(0, 6).map((r) => (
               <li key={r.id}>
                 <Link href={`/categoria/${r.slug}`} className="text-sm text-grafito hover:text-total-500">
                   {r.nombre}

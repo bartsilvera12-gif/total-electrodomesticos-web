@@ -4,18 +4,20 @@ import { HeroCasa } from '@/components/HeroCasa';
 import {
   Beneficios, Categorias, Espacios, Institucional, Marcas,
 } from '@/components/SeccionesHome';
-import { obtenerDestacados, obtenerOfertas } from '@/lib/catalogo/servicio';
+import { obtenerDestacados, obtenerMarcas, obtenerOfertas, obtenerRubros } from '@/lib/catalogo/servicio';
 
 export default async function Home() {
-  const [destacados, ofertas] = await Promise.all([
+  const [destacados, ofertas, rubros, marcas] = await Promise.all([
     obtenerDestacados(4),
     obtenerOfertas(4),
+    obtenerRubros(),
+    obtenerMarcas(),
   ]);
 
   return (
     <Armazon>
-      <HeroCasa />
-      <Categorias />
+      <HeroCasa rubros={rubros} />
+      <Categorias rubros={rubros} />
       <Espacios />
       <FilaProductos
         titulo="Elegidos de Total"
@@ -28,7 +30,7 @@ export default async function Home() {
         productos={ofertas}
         verTodo={{ href: '/ofertas', etiqueta: 'Ver todas las ofertas' }}
       />
-      <Marcas />
+      <Marcas marcas={marcas} />
       <Institucional />
     </Armazon>
   );

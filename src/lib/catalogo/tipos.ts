@@ -32,6 +32,13 @@ export interface Producto {
   disponibilidad: Disponibilidad;
   /** Describe la foto mientras no haya imágenes cargadas */
   imagen: string;
+  /** Foto real, cuando el panel ya la cargó */
+  imagenUrl?: string;
+  /** Fotos adicionales */
+  galeria?: string[];
+  garantiaMeses?: number;
+  seoTitulo?: string;
+  seoDescripcion?: string;
   /** Características, ficha técnica y garantía para la página de producto */
   fichaTecnica?: Array<{ etiqueta: string; valor: string }>;
   descripcion?: string;
@@ -44,6 +51,9 @@ export interface Rubro {
   nombre: string;
   slug: string;
   subcategorias: string[];
+  imagenUrl?: string;
+  /** Peso en la grilla editorial de la home: 1 normal, 2 bloque grande */
+  destaque?: number;
 }
 
 /** Un espacio de la casa, para quien sabe qué quiere equipar pero no en qué rubro buscar */

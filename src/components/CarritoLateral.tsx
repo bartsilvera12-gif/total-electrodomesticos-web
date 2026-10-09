@@ -5,13 +5,16 @@ import { useEffect } from 'react';
 import { useTienda } from '@/lib/tienda/contexto';
 import { guaranies } from '@/lib/formato';
 import { ConsultarWhatsapp } from './ConsultarWhatsapp';
-import type { Producto } from '@/lib/catalogo/tipos';
+import { useProductos } from '@/lib/catalogo/useProductos';
 import { FotoProducto } from './FotoProducto';
 
 export function CarritoLateral({
-  abierto, cerrar, productos,
-}: { abierto: boolean; cerrar: () => void; productos: Producto[] }) {
+  abierto, cerrar,
+}: { abierto: boolean; cerrar: () => void }) {
   const { carrito, cambiarCantidad, quitar } = useTienda();
+  // Se resuelven contra la base cada vez: el precio y el stock los manda el ERP
+  // y pueden haber cambiado desde que el producto entró al carrito.
+  const { productos } = useProductos(carrito.map((l) => l.productoId));
 
   // Cerrar con Escape y bloquear el scroll de fondo mientras está abierto
   useEffect(() => {

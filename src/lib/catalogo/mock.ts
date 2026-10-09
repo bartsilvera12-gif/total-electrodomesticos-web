@@ -1,34 +1,17 @@
-import type { Disponibilidad, Espacio, FiltroDinamico, Producto, Rubro } from './tipos';
+import type { Disponibilidad, Espacio, FiltroDinamico } from './tipos';
 
 /**
- * Catálogo de ejemplo. Son 14 productos representativos, a propósito.
+ * Taxonomía de la tienda.
  *
- * El catálogo real son ~3.400 artículos y no va acá: el brief pide no cargar
- * todo el catálogo en el cliente, y el archivo de origen trae una columna COSTO
- * que es información interna y no puede salir en la web ni quedar en git.
+ * Los productos, las categorías y las marcas salen del schema `total`, el mismo
+ * del ERP, por `servicio.ts`. Acá queda solo lo que es decisión de la tienda y
+ * no existe en el ERP: los espacios de la casa, las zonas del hero, los filtros
+ * técnicos por rubro y los logotipos de marca.
  */
 
 const pexels = (id: number) =>
   `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=1200`;
 
-export const RUBROS: Rubro[] = [
-  { id: 'clima', nombre: 'Climatización', slug: 'climatizacion', subcategorias: ['Aires acondicionados', 'Ventiladores', 'Otros'] },
-  { id: 'tv', nombre: 'TV & Audio', slug: 'tv-y-audio', subcategorias: ['Televisores', 'Parlantes', 'Audio'] },
-  { id: 'cel', nombre: 'Celulares & Tecnología', slug: 'celulares-y-tecnologia', subcategorias: ['Celulares', 'Accesorios', 'Tecnología'] },
-  { id: 'refri', nombre: 'Refrigeración', slug: 'refrigeracion', subcategorias: ['Heladeras', 'Congeladores', 'Bebederos'] },
-  { id: 'cocina', nombre: 'Cocina', slug: 'cocina', subcategorias: ['Cocinas', 'Hornos', 'Microondas', 'Freidoras', 'Licuadoras', 'Cafeteras'] },
-  { id: 'lavado', nombre: 'Lavado', slug: 'lavado', subcategorias: ['Lavarropas', 'Otros'] },
-  { id: 'hogar', nombre: 'Hogar', slug: 'hogar', subcategorias: ['Muebles', 'Mesas', 'Sillas', 'Roperos'] },
-  { id: 'dorm', nombre: 'Dormitorio', slug: 'dormitorio', subcategorias: ['Sommiers', 'Colchones'] },
-  { id: 'cuidado', nombre: 'Cuidado Personal', slug: 'cuidado-personal', subcategorias: ['Afeitadoras', 'Secadores', 'Planchitas'] },
-  { id: 'ext', nombre: 'Deportes & Exterior', slug: 'deportes-y-exterior', subcategorias: ['Bicicletas', 'Piscinas', 'Recreación'] },
-];
-
-/** Las marcas reales salen del catálogo del ERP. Estas son las del mock. */
-export const MARCAS = [
-  'Samsung', 'Philips', 'Tokyo', 'Midea', 'Carrier', 'Goodweather',
-  'JBL', 'Xiaomi', 'Electrolux', 'Remington', 'Babyliss', 'Tramontina',
-];
 
 /** Logotipos disponibles. Las marcas sin archivo se componen tipográficamente. */
 export const LOGOS_MARCA: Record<string, { src: string; alto: number }> = {
@@ -94,32 +77,3 @@ export const ZONAS_HERO = [
   { id: 'tecno', ambiente: 'Escritorio', titulo: 'Tecnología', rubro: 'cel', foto: pexels(4526428) },
   { id: 'dorm', ambiente: 'Dormitorio', titulo: 'Dormitorio', rubro: 'dorm', foto: pexels(7598137) },
 ] as const;
-
-const p = (
-  id: string, codigo: string, marca: string, nombre: string, specs: string,
-  rubro: string, subcategoria: string, precio: number,
-  disponibilidad: Disponibilidad, imagen: string,
-  extra: Partial<Producto> = {},
-): Producto => ({
-  id, codigo, marca, nombre,
-  slug: `${marca} ${nombre}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/&/g, 'y').replace(/["']/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-  rubro, subcategoria, specs: specs.split(' · '), precio, disponibilidad, imagen, ...extra,
-});
-
-export const PRODUCTOS: Producto[] = [
-  p('p1', '10234', 'Samsung', 'Smart TV 55" 4K', '55" · 4K UHD · Smart TV', 'tv', 'Televisores', 3360000, 'disponible', 'smart tv 55"', { destacado: true }),
-  p('p2', '20412', 'Midea', 'Aire acondicionado 12.000 BTU', '12.000 BTU · Inverter · Split', 'clima', 'Aires acondicionados', 3950000, 'ultimas', 'aire split', { destacado: true }),
-  p('p3', '30871', 'Tokyo', 'Heladera 300 L', '300 L · Frío seco', 'refri', 'Heladeras', 2890000, 'disponible', 'heladera', { destacado: true }),
-  p('p4', '40125', 'Xiaomi', 'Smartphone 128 GB', '128 GB · 6 GB RAM', 'cel', 'Celulares', 1690000, 'disponible', 'smartphone', { destacado: true, nuevo: true }),
-  p('p5', '50330', 'Philips', 'Freidora de aire 4,1 L', '4,1 L', 'cocina', 'Freidoras', 590000, 'disponible', 'freidora de aire', { precioAnterior: 690000 }),
-  p('p6', '10988', 'JBL', 'Parlante portátil', 'Bluetooth', 'tv', 'Parlantes', 890000, 'sin-stock', 'parlante'),
-  p('p7', '60217', 'Electrolux', 'Lavarropas 8 kg', '8 kg · Carga frontal', 'lavado', 'Lavarropas', 3150000, 'consultar', 'lavarropas'),
-  p('p8', '70144', 'Remington', 'Afeitadora', 'Recargable', 'cuidado', 'Afeitadoras', 290000, 'disponible', 'afeitadora', { precioAnterior: 340000 }),
-  p('p9', '40310', 'Samsung', 'Smartphone 256 GB', '256 GB · 8 GB RAM', 'cel', 'Celulares', 2990000, 'ultimas', 'smartphone', { nuevo: true }),
-  p('p10', '20033', 'Goodweather', 'Ventilador de pie', '3 velocidades', 'clima', 'Ventiladores', 250000, 'disponible', 'ventilador', { precioAnterior: 290000 }),
-  p('p11', '70288', 'Babyliss', 'Planchita de pelo', 'Placas cerámicas', 'cuidado', 'Planchitas', 390000, 'disponible', 'planchita', { nuevo: true }),
-  p('p12', '20590', 'Carrier', 'Aire acondicionado 18.000 BTU', '18.000 BTU · Inverter · Split', 'clima', 'Aires acondicionados', 5400000, 'disponible', 'aire split'),
-  p('p13', '10198', 'Samsung', 'Smart TV 43" Full HD', '43" · Full HD · Smart TV', 'tv', 'Televisores', 2150000, 'disponible', 'smart tv 43"', { nuevo: true }),
-  p('p14', '50612', 'Tramontina', 'Juego de ollas', 'Acero inoxidable', 'cocina', 'Cocinas', 450000, 'disponible', 'juego de ollas', { nuevo: true }),
-];

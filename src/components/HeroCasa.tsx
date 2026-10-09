@@ -3,7 +3,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
-import { RUBROS, ZONAS_HERO } from '@/lib/catalogo/mock';
+import { ZONAS_HERO } from '@/lib/catalogo/mock';
+import type { Rubro } from '@/lib/catalogo/tipos';
 import { ConsultarWhatsapp } from './ConsultarWhatsapp';
 import { Revelar } from './Revelar';
 
@@ -39,14 +40,15 @@ const CELDAS = [
  * y las transiciones son los del diseño original.
  */
 function Zona({
-  z, activa, alActivar, centrado = false,
+  z, activa, alActivar, rubros, centrado = false,
 }: {
   z: (typeof ZONAS_HERO)[number];
   activa: boolean;
   alActivar: () => void;
+  rubros: Rubro[];
   centrado?: boolean;
 }) {
-  const rubro = RUBROS.find((r) => r.id === z.rubro);
+  const rubro = rubros.find((r) => r.id === z.rubro);
   // El techo no crece: es un triángulo, agrandarlo deforma la casa
   const crece = activa && z.id !== 'clima' ? 1.9 : 1;
 
@@ -112,14 +114,14 @@ function Zona({
   );
 }
 
-export function HeroCasa() {
+export function HeroCasa({ rubros }: { rubros: Rubro[] }) {
   const [zona, setZona] = useState<string>('living');
   const seccion = useRef<HTMLElement>(null);
 
   const activa = ZONAS_HERO.find((z) => z.id === zona) ?? ZONAS_HERO[1];
   const filaA = zona === 'living' || zona === 'cocina' ? 1.25 : 1;
   const filaB = zona === 'tecno' || zona === 'dorm' ? 1.25 : 1;
-  const rubroDe = (id: string) => RUBROS.find((r) => r.id === id);
+  const rubroDe = (id: string) => rubros.find((r) => r.id === id);
 
   // El cursor ilumina la retícula y deja un halo. Se guarda en variables CSS
   // para no re-renderizar React en cada movimiento del mouse.
@@ -244,21 +246,21 @@ export function HeroCasa() {
             style={{ clipPath: CASA }}
           >
             <div className="flex shrink-0 basis-[calc(33%-5px)] gap-[5px]">
-              <Zona z={ZONAS_HERO[0]} activa={zona === ZONAS_HERO[0].id} alActivar={() => setZona(ZONAS_HERO[0].id)} centrado />
+              <Zona rubros={rubros} z={ZONAS_HERO[0]} activa={zona === ZONAS_HERO[0].id} alActivar={() => setZona(ZONAS_HERO[0].id)} centrado />
             </div>
             <div
               className="flex min-h-0 gap-[5px]"
               style={{ flex: `${filaA} 1 0`, transition: 'flex-grow .7s cubic-bezier(.2,.7,.2,1)' }}
             >
-              <Zona z={ZONAS_HERO[1]} activa={zona === ZONAS_HERO[1].id} alActivar={() => setZona(ZONAS_HERO[1].id)} />
-              <Zona z={ZONAS_HERO[2]} activa={zona === ZONAS_HERO[2].id} alActivar={() => setZona(ZONAS_HERO[2].id)} />
+              <Zona rubros={rubros} z={ZONAS_HERO[1]} activa={zona === ZONAS_HERO[1].id} alActivar={() => setZona(ZONAS_HERO[1].id)} />
+              <Zona rubros={rubros} z={ZONAS_HERO[2]} activa={zona === ZONAS_HERO[2].id} alActivar={() => setZona(ZONAS_HERO[2].id)} />
             </div>
             <div
               className="flex min-h-0 gap-[5px]"
               style={{ flex: `${filaB} 1 0`, transition: 'flex-grow .7s cubic-bezier(.2,.7,.2,1)' }}
             >
-              <Zona z={ZONAS_HERO[3]} activa={zona === ZONAS_HERO[3].id} alActivar={() => setZona(ZONAS_HERO[3].id)} />
-              <Zona z={ZONAS_HERO[4]} activa={zona === ZONAS_HERO[4].id} alActivar={() => setZona(ZONAS_HERO[4].id)} />
+              <Zona rubros={rubros} z={ZONAS_HERO[3]} activa={zona === ZONAS_HERO[3].id} alActivar={() => setZona(ZONAS_HERO[3].id)} />
+              <Zona rubros={rubros} z={ZONAS_HERO[4]} activa={zona === ZONAS_HERO[4].id} alActivar={() => setZona(ZONAS_HERO[4].id)} />
             </div>
           </div>
 

@@ -5,16 +5,16 @@ import { useSearchParams } from 'next/navigation';
 import { fechaCorta, guaranies } from '@/lib/formato';
 import { ConsultarWhatsapp } from './ConsultarWhatsapp';
 import { ASESORES, SITIO } from '@/lib/sitio';
-import { useTienda } from '@/lib/tienda/contexto';
+import { usePedidos } from '@/lib/tienda/usePedidos';
 import { ETIQUETA_ESTADO } from '@/lib/tienda/tipos';
 
 export function Confirmacion() {
   const params = useSearchParams();
   const numero = params.get('pedido');
-  const { pedidos, listo } = useTienda();
-  const pedido = pedidos.find((p) => p.numero === numero);
+  const { pedidos, cargando } = usePedidos(numero ?? undefined);
+  const pedido = pedidos[0];
 
-  if (!listo) {
+  if (cargando) {
     return <div className="py-24 text-center text-humo">Buscando tu pedido…</div>;
   }
 

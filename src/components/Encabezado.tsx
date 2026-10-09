@@ -4,8 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { PRODUCTOS, RUBROS } from '@/lib/catalogo/mock';
 import { SITIO } from '@/lib/sitio';
+import type { Rubro } from '@/lib/catalogo/tipos';
 import { slugificar } from '@/lib/formato';
 import { ConsultarWhatsapp, LineasWhatsapp } from './ConsultarWhatsapp';
 import { useTienda } from '@/lib/tienda/contexto';
@@ -21,7 +21,7 @@ const NAV = [
   { href: '/novedades', etiqueta: 'Novedades' },
 ];
 
-export function Encabezado() {
+export function Encabezado({ rubros }: { rubros: Rubro[] }) {
   const ruta = usePathname();
   const { unidades, sesion, favoritos } = useTienda();
   const [mega, setMega] = useState(false);
@@ -155,7 +155,7 @@ export function Encabezado() {
             onMouseLeave={() => setMega(false)}
           >
             <div className="mx-auto grid max-w-[1400px] grid-cols-5 gap-x-6 gap-y-4 px-6 py-5">
-              {RUBROS.map((r) => (
+              {rubros.map((r) => (
                 <div key={r.id}>
                   <Link href={`/categoria/${r.slug}`} className="text-[13px] font-bold hover:text-total-500">
                     {r.nombre}
@@ -199,7 +199,7 @@ export function Encabezado() {
       </header>
 
       <Buscador abierto={buscar} cerrar={() => setBuscar(false)} />
-      <CarritoLateral abierto={carrito} cerrar={() => setCarrito(false)} productos={PRODUCTOS} />
+      <CarritoLateral abierto={carrito} cerrar={() => setCarrito(false)} />
     </>
   );
 }

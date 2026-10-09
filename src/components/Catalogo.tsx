@@ -1,10 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { FILTROS_DINAMICOS, MARCAS, PRODUCTOS, RUBROS } from '@/lib/catalogo/mock';
-import { ETIQUETA_DISPONIBILIDAD } from '@/lib/catalogo/mock';
-import type { Disponibilidad, Producto } from '@/lib/catalogo/tipos';
-import { GrillaProductos } from './GrillaProductos';
+import { useCallback, useEffect, useState } from 'react';
+import { ETIQUETA_DISPONIBILIDAD, FILTROS_DINAMICOS } from '@/lib/catalogo/mock';
+import type { Disponibilidad, Producto, Rubro } from '@/lib/catalogo/tipos';
+import { GrillaEsqueleto, GrillaProductos } from './GrillaProductos';
 
 const RANGOS: Array<{ id: string; etiqueta: string; min?: number; max?: number }> = [
   { id: 'todos', etiqueta: 'Todos' },
@@ -45,6 +44,7 @@ const POR_PAGINA = 8;
 
 export function Catalogo({
   titulo, bajada, rubroFijo, marcaFija, soloOfertasFijo, soloNuevosFijo, busquedaInicial,
+  rubros, marcasDisponibles,
 }: {
   titulo: string;
   bajada?: string;
@@ -53,6 +53,9 @@ export function Catalogo({
   soloOfertasFijo?: boolean;
   soloNuevosFijo?: boolean;
   busquedaInicial?: string;
+  /** Resueltos en el servidor: el navegador no pide la taxonomía aparte */
+  rubros: Rubro[];
+  marcasDisponibles: string[];
 }) {
   const [subcategoria, setSubcategoria] = useState<string | null>(null);
   const [marcas, setMarcas] = useState<string[]>(marcaFija ? [marcaFija] : []);
@@ -61,49 +64,58 @@ export function Catalogo({
   const [soloOfertas, setSoloOfertas] = useState(Boolean(soloOfertasFijo));
   const [tecnicos, setTecnicos] = useState<Record<string, string[]>>({});
   const [orden, setOrden] = useState<(typeof ORDENES)[number]['id']>('relevancia');
-  const [visibles, setVisibles] = useState(POR_PAGINA);
+  const [pagina, setPagina] = useState(1);
   const [panelAbierto, setPanelAbierto] = useState(false);
 
-  const rubro = rubroFijo ? RUBROS.find((r) => r.id === rubroFijo) : null;
+  const rubro = rubroFijo ? rubros.find((r) => r.slug === rubroFijo) : null;
   // Filtros técnicos: solo los que aplican al rubro que se está mirando
   const filtrosTecnicos = rubroFijo ? (FILTROS_DINAMICOS[rubroFijo] ?? []) : [];
 
-  const resultado = useMemo(() => {
-    let items = PRODUCTOS.slice();
-    if (rubroFijo) items = items.filter((p) => p.rubro === rubroFijo);
-    if (soloNuevosFijo) items = items.filter((p) => p.nuevo);
-    if (subcategoria) items = items.filter((p) => p.subcategoria === subcategoria);
-    if (marcas.length) items = items.filter((p) => marcas.includes(p.marca));
-    if (disponibilidad.length) items = items.filter((p) => disponibilidad.includes(p.disponibilidad));
-    if (soloOfertas) items = items.filter((p) => p.precioAnterior && p.precioAnterior > p.precio);
+  const [productos, setProductos] = useState<Producto[]>([]);
+  const [total, setTotal] = useState(0);
+  const [hayMas, setHayMas] = useState(false);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // El filtrado y el paginado ocurren en la base: con el catálogo real son
+  // miles de artículos y el brief pide no mandarlos todos al navegador.
+  const consultar = useCallback(async (pagina: number, acumular: boolean) => {
     const r = RANGOS.find((x) => x.id === rango);
-    if (r?.min !== undefined) items = items.filter((p) => p.precio > r.min!);
-    if (r?.max !== undefined) items = items.filter((p) => p.precio <= r.max!);
+    const p = new URLSearchParams();
+    if (rubroFijo) p.set('rubro', rubroFijo);
+    if (subcategoria) p.set('subcategoria', subcategoria);
+    if (marcas.length) p.set('marcas', marcas.join(','));
+    if (disponibilidad.length) p.set('disponibilidad', disponibilidad.join(','));
+    if (r?.min !== undefined) p.set('precioMin', String(r.min));
+    if (r?.max !== undefined) p.set('precioMax', String(r.max));
+    if (soloOfertas) p.set('ofertas', '1');
+    if (busquedaInicial?.trim()) p.set('q', busquedaInicial.trim());
+    p.set('orden', orden);
+    p.set('pagina', String(pagina));
+    p.set('porPagina', String(POR_PAGINA));
 
-    const activos = Object.entries(tecnicos).filter(([, v]) => v.length);
-    if (activos.length) {
-      items = items.filter((p) => {
-        const texto = normalizar([p.nombre, ...p.specs].join(' '));
-        return activos.every(([, valores]) => valores.some((v) => texto.includes(normalizar(v))));
-      });
+    setCargando(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/catalogo?${p}`);
+      if (!res.ok) throw new Error('No pudimos cargar los productos');
+      const d = await res.json();
+      setProductos((prev) => (acumular ? [...prev, ...d.productos] : d.productos));
+      setTotal(d.total);
+      setHayMas(d.hayMas);
+    } catch {
+      setError('No pudimos cargar los productos. Probá de nuevo en unos segundos.');
+      if (!acumular) setProductos([]);
+    } finally {
+      setCargando(false);
     }
+  }, [rubroFijo, subcategoria, marcas, disponibilidad, rango, soloOfertas, orden, busquedaInicial]);
 
-    if (busquedaInicial?.trim()) {
-      const n = normalizar(busquedaInicial);
-      items = items.filter((p) =>
-        [p.nombre, p.marca, p.subcategoria, p.codigo, p.specs.join(' ')]
-          .some((c) => normalizar(c).includes(n)));
-    }
-
-    if (orden === 'precio-asc') items.sort((a, b) => a.precio - b.precio);
-    else if (orden === 'precio-desc') items.sort((a, b) => b.precio - a.precio);
-    else if (orden === 'nuevos') items.sort((a, b) => Number(b.nuevo ?? 0) - Number(a.nuevo ?? 0));
-
-    return items;
-  }, [rubroFijo, soloNuevosFijo, subcategoria, marcas, disponibilidad, soloOfertas, rango, tecnicos, orden, busquedaInicial]);
-
-  const mostrados: Producto[] = resultado.slice(0, visibles);
+  // Al cambiar cualquier filtro se vuelve a la primera página
+  useEffect(() => {
+    setPagina(1);
+    consultar(1, false);
+  }, [consultar]);
 
   const alternar = <T,>(lista: T[], valor: T, set: (v: T[]) => void) =>
     set(lista.includes(valor) ? lista.filter((x) => x !== valor) : [...lista, valor]);
@@ -121,7 +133,7 @@ export function Catalogo({
     setRango('todos');
     setTecnicos({});
     setSoloOfertas(Boolean(soloOfertasFijo));
-    setVisibles(POR_PAGINA);
+    setPagina(1);
   };
 
   const filtros = (
@@ -144,7 +156,7 @@ export function Catalogo({
         <section>
           <h3 className="mb-2 font-mono text-[11px] tracking-widest text-humo uppercase">Marca</h3>
           <div className="flex max-h-56 flex-col overflow-y-auto">
-            {MARCAS.map((m) => (
+            {marcasDisponibles.map((m) => (
               <Casilla key={m} marcada={marcas.includes(m)} alCambiar={() => alternar(marcas, m, setMarcas)}>
                 {m}
               </Casilla>
@@ -244,9 +256,11 @@ export function Catalogo({
         <div>
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-linea pb-4">
             <p className="text-sm text-humo">
-              {resultado.length === 0
-                ? 'Sin resultados'
-                : `Estás viendo ${mostrados.length} de ${resultado.length} producto${resultado.length === 1 ? '' : 's'}`}
+              {cargando && !productos.length
+                ? 'Cargando…'
+                : total === 0
+                  ? 'Sin resultados'
+                  : `Estás viendo ${productos.length} de ${total} producto${total === 1 ? '' : 's'}`}
             </p>
             <div className="flex items-center gap-3">
               <button
@@ -271,7 +285,20 @@ export function Catalogo({
             </div>
           </div>
 
-          {resultado.length === 0 ? (
+          {error ? (
+            <div className="flex flex-col items-center gap-4 py-20 text-center">
+              <p className="text-lg font-semibold">{error}</p>
+              <button
+                type="button"
+                onClick={() => consultar(1, false)}
+                className="rounded-sm bg-total-500 px-5 py-3 text-sm font-bold text-white hover:bg-total-600"
+              >
+                Intentar nuevamente
+              </button>
+            </div>
+          ) : cargando && !productos.length ? (
+            <GrillaEsqueleto cantidad={8} />
+          ) : productos.length === 0 ? (
             <div className="flex flex-col items-center gap-4 py-20 text-center">
               <p className="text-lg font-semibold">No encontramos productos con esos filtros.</p>
               <p className="max-w-sm text-sm text-humo">
@@ -287,15 +314,20 @@ export function Catalogo({
             </div>
           ) : (
             <>
-              <GrillaProductos productos={mostrados} />
-              {visibles < resultado.length && (
+              <GrillaProductos productos={productos} />
+              {hayMas && (
                 <div className="mt-8 flex justify-center">
                   <button
                     type="button"
-                    onClick={() => setVisibles((v) => v + POR_PAGINA)}
-                    className="rounded-sm border border-carbon px-6 py-3 text-sm font-bold hover:bg-carbon hover:text-white"
+                    disabled={cargando}
+                    onClick={() => {
+                      const p = pagina + 1;
+                      setPagina(p);
+                      consultar(p, true);
+                    }}
+                    className="rounded-sm border border-carbon px-6 py-3 text-sm font-bold transition-colors hover:bg-carbon hover:text-white disabled:opacity-50"
                   >
-                    Cargar más productos
+                    {cargando ? 'Cargando…' : 'Cargar más productos'}
                   </button>
                 </div>
               )}
@@ -321,7 +353,7 @@ export function Catalogo({
               onClick={() => setPanelAbierto(false)}
               className="mt-6 w-full rounded-sm bg-total-500 px-5 py-3.5 text-sm font-bold text-white"
             >
-              Ver {resultado.length} producto{resultado.length === 1 ? '' : 's'}
+              Ver {total} producto{total === 1 ? '' : 's'}
             </button>
           </div>
         </div>

@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Producto } from '@/lib/catalogo/tipos';
-import { RUBROS } from '@/lib/catalogo/mock';
+import type { Producto, Rubro } from '@/lib/catalogo/tipos';
 import { guaranies } from '@/lib/formato';
 import { ConsultarWhatsapp } from './ConsultarWhatsapp';
 import { useTienda } from '@/lib/tienda/contexto';
@@ -21,8 +20,8 @@ const SOLAPAS = [
 ] as const;
 
 export function DetalleProducto({
-  producto, relacionados,
-}: { producto: Producto; relacionados: Producto[] }) {
+  producto, relacionados, rubro,
+}: { producto: Producto; relacionados: Producto[]; rubro: Rubro | null }) {
   const { agregar, alternarFavorito, esFavorito } = useTienda();
   const router = useRouter();
   const [cantidad, setCantidad] = useState(1);
@@ -30,7 +29,6 @@ export function DetalleProducto({
   const [comparar, setComparar] = useState<string>(relacionados[0]?.id ?? '');
 
   const comprable = sePuedeComprar(producto.disponibilidad);
-  const rubro = RUBROS.find((r) => r.id === producto.rubro);
   const favorito = esFavorito(producto.id);
   const comparado = relacionados.find((r) => r.id === comparar);
 

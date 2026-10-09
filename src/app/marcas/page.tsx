@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Armazon } from '@/components/Armazon';
-import { LOGOS_MARCA, MARCAS } from '@/lib/catalogo/mock';
+import { LOGOS_MARCA } from '@/lib/catalogo/mock';
+import { obtenerMarcas } from '@/lib/catalogo/servicio';
 import { slugificar } from '@/lib/formato';
 
 export const metadata: Metadata = {
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/marcas' },
 };
 
-export default function Marcas() {
+export default async function Marcas() {
+  const MARCAS = await obtenerMarcas();
   return (
     <Armazon>
       <div className="mx-auto max-w-[1400px] px-6 py-12">

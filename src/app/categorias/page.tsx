@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Armazon } from '@/components/Armazon';
 import { Espacios } from '@/components/SeccionesHome';
-import { RUBROS } from '@/lib/catalogo/mock';
+import { obtenerRubros } from '@/lib/catalogo/servicio';
 import { slugificar } from '@/lib/formato';
 
 export const metadata: Metadata = {
@@ -11,7 +11,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/categorias' },
 };
 
-export default function Categorias() {
+export default async function Categorias() {
+  const RUBROS = await obtenerRubros();
   return (
     <Armazon>
       <div className="mx-auto max-w-[1400px] px-6 py-12">

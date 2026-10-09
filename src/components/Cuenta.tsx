@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { fechaCorta, guaranies } from '@/lib/formato';
 import { useTienda } from '@/lib/tienda/contexto';
+import { usePedidos } from '@/lib/tienda/usePedidos';
 import { ETIQUETA_ESTADO, PASOS_PEDIDO, type Pedido } from '@/lib/tienda/tipos';
 
 const SOLAPAS = [
@@ -39,7 +40,8 @@ function Seguimiento({ pedido }: { pedido: Pedido }) {
 
 export function Cuenta() {
   const router = useRouter();
-  const { sesion, pedidos, salir, listo } = useTienda();
+  const { sesion, salir, listo } = useTienda();
+  const { pedidos, cargando: cargandoPedidos } = usePedidos();
   const [solapa, setSolapa] = useState<(typeof SOLAPAS)[number]['id']>('pedidos');
   const [abierto, setAbierto] = useState<string | null>(null);
 
@@ -73,7 +75,7 @@ export function Cuenta() {
         ))}
         <button
           type="button"
-          onClick={() => { salir(); router.push('/'); }}
+          onClick={async () => { await salir(); router.push('/'); router.refresh(); }}
           className="-mb-px border-b-2 border-transparent pb-3 text-sm font-semibold text-humo hover:text-carbon"
         >
           Cerrar sesión
@@ -82,7 +84,9 @@ export function Cuenta() {
 
       <div className="py-8">
         {solapa === 'pedidos' && (
-          pedidos.length === 0 ? (
+          cargandoPedidos ? (
+            <p className="py-16 text-center text-humo">Cargando tus pedidos…</p>
+          ) : pedidos.length === 0 ? (
             <div className="flex flex-col items-center gap-4 py-16 text-center">
               <p className="text-lg font-semibold">Todavía no tenés pedidos.</p>
               <p className="max-w-sm text-sm text-humo">

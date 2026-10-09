@@ -3,18 +3,17 @@ import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { Armazon } from '@/components/Armazon';
 import { Catalogo } from '@/components/Catalogo';
-import { LOGOS_MARCA, MARCAS } from '@/lib/catalogo/mock';
+import { LOGOS_MARCA } from '@/lib/catalogo/mock';
+import { obtenerMarcas, obtenerRubros } from '@/lib/catalogo/servicio';
 import { slugificar } from '@/lib/formato';
 
-export async function generateStaticParams() {
-  return MARCAS.map((m) => ({ slug: slugificar(m) }));
-}
+// Las marcas salen de la base: se renderizan a demanda.
 
 export async function generateMetadata({
   params,
 }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const marca = MARCAS.find((m) => slugificar(m) === slug);
+  const marca = (await obtenerMarcas()).find((m) => slugificar(m) === slug);
   if (!marca) return {};
   return {
     title: marca,
@@ -25,10 +24,11 @@ export async function generateMetadata({
 
 export default async function Marca({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const marca = MARCAS.find((m) => slugificar(m) === slug);
+  const marca = (await obtenerMarcas()).find((m) => slugificar(m) === slug);
   if (!marca) notFound();
   const logo = LOGOS_MARCA[marca];
 
+  const [rubros, marcasDisponibles] = await Promise.all([obtenerRubros(), obtenerMarcas()]);
   return (
     <Armazon>
       <div className="border-b border-linea bg-total-50">
@@ -41,7 +41,7 @@ export default async function Marca({ params }: { params: Promise<{ slug: string
           <p className="text-sm text-grafito">Productos {marca} disponibles en Total.</p>
         </div>
       </div>
-      <Catalogo titulo={marca} marcaFija={marca} />
+      <Catalogo titulo={marca} marcaFija={marca} rubros={rubros} marcasDisponibles={marcasDisponibles} />
     </Armazon>
   );
 }

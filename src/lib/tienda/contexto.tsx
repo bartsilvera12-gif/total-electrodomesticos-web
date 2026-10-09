@@ -4,18 +4,15 @@ import {
   createContext, useCallback, useContext, useEffect, useMemo, useState,
   type ReactNode,
 } from 'react';
-import type { Producto } from '@/lib/catalogo/tipos';
+import { createBrowserClient } from '@supabase/ssr';
 import { CLAVES, escribir, leer } from './almacenamiento';
-import type {
-  Cliente, Entrega, EstadoPago, LineaCarrito, Pedido, Sesion,
-} from './tipos';
+import type { LineaCarrito, Sesion } from './tipos';
 
 interface EstadoTienda {
   /** Arranca vacío. Se rehidrata del navegador después del montaje. */
   carrito: LineaCarrito[];
   favoritos: string[];
   sesion: Sesion | null;
-  pedidos: Pedido[];
   /** false hasta que se leyó el almacenamiento, para no parpadear en el render del servidor */
   listo: boolean;
 
@@ -29,47 +26,58 @@ interface EstadoTienda {
   esFavorito: (productoId: string) => boolean;
 
   ingresar: (sesion: Sesion) => void;
-  salir: () => void;
-
-  crearPedido: (datos: {
-    productos: Producto[];
-    cliente: Cliente;
-    entrega: Entrega;
-    estadoPago: EstadoPago;
-  }) => Pedido;
+  salir: () => Promise<void>;
 }
 
 const Contexto = createContext<EstadoTienda | null>(null);
 
-/** W-000128 fue el último número del prototipo; seguimos desde ahí. */
-const NUMERO_INICIAL = 128;
-
-function siguienteNumero(): string {
-  const ultimo = leer<number>(CLAVES.ultimoNumero, NUMERO_INICIAL);
-  const proximo = ultimo + 1;
-  escribir(CLAVES.ultimoNumero, proximo);
-  return `W-${String(proximo).padStart(6, '0')}`;
+/**
+ * El carrito y los favoritos siguen en el navegador a propósito: son de este
+ * dispositivo y no hace falta cuenta para armarlos. La sesión y los pedidos sí
+ * viven en el servidor.
+ */
+function navegador() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
 }
 
 export function ProveedorTienda({ children }: { children: ReactNode }) {
   const [carrito, setCarrito] = useState<LineaCarrito[]>([]);
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const [sesion, setSesion] = useState<Sesion | null>(null);
-  const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [listo, setListo] = useState(false);
 
-  // Rehidratar una sola vez, ya en el cliente
+  // El carrito y los favoritos, del navegador. La sesión, de Supabase.
   useEffect(() => {
     setCarrito(leer<LineaCarrito[]>(CLAVES.carrito, []));
     setFavoritos(leer<string[]>(CLAVES.favoritos, []));
-    setSesion(leer<Sesion | null>(CLAVES.sesion, null));
-    setPedidos(leer<Pedido[]>(CLAVES.pedidos, []));
-    setListo(true);
+
+    const sb = navegador();
+    sb.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        const m = (user.user_metadata ?? {}) as Record<string, string>;
+        setSesion({
+          nombre: m.nombre || user.email?.split('@')[0] || 'Cliente',
+          apellido: m.apellido ?? '',
+          correo: user.email ?? '',
+          documento: m.documento,
+          telefono: m.telefono,
+        });
+      }
+      setListo(true);
+    });
+
+    // Si inicia o cierra sesión en otra pestaña, acá se entera
+    const { data: sub } = sb.auth.onAuthStateChange((_e, s) => {
+      if (!s) setSesion(null);
+    });
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   useEffect(() => { if (listo) escribir(CLAVES.carrito, carrito); }, [carrito, listo]);
   useEffect(() => { if (listo) escribir(CLAVES.favoritos, favoritos); }, [favoritos, listo]);
-  useEffect(() => { if (listo) escribir(CLAVES.pedidos, pedidos); }, [pedidos, listo]);
 
   const agregar = useCallback((productoId: string, cantidad = 1) => {
     setCarrito((actual) => {
@@ -101,44 +109,12 @@ export function ProveedorTienda({ children }: { children: ReactNode }) {
 
   const ingresar = useCallback((nueva: Sesion) => {
     setSesion(nueva);
-    escribir(CLAVES.sesion, nueva);
   }, []);
 
-  const salir = useCallback(() => {
+  const salir = useCallback(async () => {
+    await navegador().auth.signOut();
     setSesion(null);
-    escribir(CLAVES.sesion, null);
   }, []);
-
-  const crearPedido = useCallback<EstadoTienda['crearPedido']>(
-    ({ productos, cliente, entrega, estadoPago }) => {
-      const porId = new Map(productos.map((p) => [p.id, p]));
-      const lineas = carrito.flatMap((l) => {
-        const p = porId.get(l.productoId);
-        if (!p) return [];
-        return [{
-          productoId: p.id, nombre: p.nombre, marca: p.marca, codigo: p.codigo,
-          precio: p.precio, cantidad: l.cantidad,
-        }];
-      });
-      const subtotal = lineas.reduce((t, l) => t + l.precio * l.cantidad, 0);
-      const pedido: Pedido = {
-        numero: siguienteNumero(),
-        fechaISO: new Date().toISOString(),
-        lineas,
-        subtotal,
-        // El costo de envío se confirma según la dirección, así que todavía no suma
-        total: subtotal,
-        cliente,
-        entrega,
-        estado: estadoPago === 'aprobado' ? 'pagado' : 'pago-pendiente',
-        estadoPago,
-      };
-      setPedidos((actual) => [pedido, ...actual]);
-      setCarrito([]);
-      return pedido;
-    },
-    [carrito],
-  );
 
   const unidades = useMemo(
     () => carrito.reduce((t, l) => t + l.cantidad, 0),
@@ -146,15 +122,15 @@ export function ProveedorTienda({ children }: { children: ReactNode }) {
   );
 
   const valor = useMemo<EstadoTienda>(() => ({
-    carrito, favoritos, sesion, pedidos, listo,
+    carrito, favoritos, sesion, listo,
     agregar, cambiarCantidad, quitar, vaciarCarrito, unidades,
     alternarFavorito,
     esFavorito: (id: string) => favoritos.includes(id),
-    ingresar, salir, crearPedido,
+    ingresar, salir,
   }), [
-    carrito, favoritos, sesion, pedidos, listo, unidades,
+    carrito, favoritos, sesion, listo, unidades,
     agregar, cambiarCantidad, quitar, vaciarCarrito,
-    alternarFavorito, ingresar, salir, crearPedido,
+    alternarFavorito, ingresar, salir,
   ]);
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;

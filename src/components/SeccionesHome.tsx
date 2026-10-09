@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ESPACIOS, LOGOS_MARCA, MARCAS, RUBROS } from '@/lib/catalogo/mock';
+import { ESPACIOS, LOGOS_MARCA } from '@/lib/catalogo/mock';
+import type { Rubro } from '@/lib/catalogo/tipos';
 import { BENEFICIOS, SITIO } from '@/lib/sitio';
 import { slugificar } from '@/lib/formato';
 import { Revelar } from './Revelar';
@@ -11,11 +12,9 @@ import { Revelar } from './Revelar';
  * Composición editorial: los bloques tienen distinto peso según jerarquía, no
  * son doce cards iguales ni un bento de cuadrados al azar.
  */
-export function Categorias() {
-  const destacados = ['tv', 'clima', 'cocina', 'refri', 'cel', 'dorm'];
-  const rubros = destacados
-    .map((id) => RUBROS.find((r) => r.id === id))
-    .filter((r): r is NonNullable<typeof r> => Boolean(r));
+export function Categorias({ rubros: todos }: { rubros: Rubro[] }) {
+  // El panel define el orden y el peso visual (`destaque`); acá solo se respeta.
+  const rubros = todos.slice(0, 6);
 
   return (
     <section className="mx-auto max-w-[1400px] px-6 py-16">
@@ -32,11 +31,13 @@ export function Categorias() {
             href={`/categoria/${r.slug}`}
             data-revelar-item
             className={`group flex min-h-44 flex-col justify-between bg-white p-6 transition-colors hover:bg-total-50 ${
-              i === 0 ? 'md:col-span-2 md:row-span-2 md:min-h-96' : ''
+              (r.destaque ?? 1) >= 2 || (i === 0 && !todos.some((x) => (x.destaque ?? 1) >= 2))
+                ? 'md:col-span-2 md:row-span-2 md:min-h-96'
+                : ''
             }`}
           >
             <div>
-              <h3 className={`font-bold tracking-tight ${i === 0 ? 'text-3xl' : 'text-xl'}`}>
+              <h3 className={`font-bold tracking-tight ${(r.destaque ?? 1) >= 2 || i === 0 ? 'text-3xl' : 'text-xl'}`}>
                 {r.nombre}
               </h3>
               <p className="mt-2 text-sm text-humo">{r.subcategorias.join(' · ')}</p>
@@ -102,8 +103,9 @@ export function Espacios() {
   );
 }
 
-export function Marcas() {
-  const fila = [...MARCAS, ...MARCAS];
+export function Marcas({ marcas }: { marcas: string[] }) {
+  if (!marcas.length) return null;
+  const fila = [...marcas, ...marcas];
   return (
     <section className="overflow-hidden border-y border-linea py-14">
       <div className="mx-auto max-w-[1400px] px-6">

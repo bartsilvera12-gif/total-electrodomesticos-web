@@ -2,14 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Armazon } from '@/components/Armazon';
 import { DetalleProducto } from '@/components/DetalleProducto';
-import { PRODUCTOS } from '@/lib/catalogo/mock';
-import { obtenerProductoPorSlug, obtenerRelacionados } from '@/lib/catalogo/servicio';
+import { obtenerProductoPorSlug, obtenerRelacionados, obtenerRubro } from '@/lib/catalogo/servicio';
 import { guaranies } from '@/lib/formato';
 import { SITIO } from '@/lib/sitio';
 
-export async function generateStaticParams() {
-  return PRODUCTOS.map((p) => ({ slug: p.slug }));
-}
+// Sin generateStaticParams: el catálogo real son miles de artículos y cambian
+// desde el ERP. Se renderizan a demanda.
 
 export async function generateMetadata({
   params,
@@ -31,7 +29,10 @@ export default async function PaginaProducto({ params }: { params: Promise<{ slu
   const { slug } = await params;
   const producto = await obtenerProductoPorSlug(slug);
   if (!producto) notFound();
-  const relacionados = await obtenerRelacionados(producto, 4);
+  const [relacionados, rubro] = await Promise.all([
+    obtenerRelacionados(producto, 4),
+    obtenerRubro(producto.rubro),
+  ]);
 
   // Datos estructurados: que el producto se entienda en los buscadores.
   // El costo interno nunca sale: solo el precio de venta.
@@ -60,7 +61,7 @@ export default async function PaginaProducto({ params }: { params: Promise<{ slu
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <DetalleProducto producto={producto} relacionados={relacionados} />
+      <DetalleProducto producto={producto} relacionados={relacionados} rubro={rubro} />
     </Armazon>
   );
 }

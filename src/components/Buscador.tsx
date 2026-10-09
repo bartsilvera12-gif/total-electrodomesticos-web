@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { PRODUCTOS, RUBROS, MARCAS } from '@/lib/catalogo/mock';
+import { useEffect, useRef, useState } from 'react';
+import type { Producto, Rubro } from '@/lib/catalogo/tipos';
 import { slugificar } from '@/lib/formato';
 import { guaranies } from '@/lib/formato';
 
@@ -34,20 +34,29 @@ export function Buscador({ abierto, cerrar }: { abierto: boolean; cerrar: () => 
     return () => window.removeEventListener('keydown', alTeclear);
   }, [abierto, cerrar]);
 
-  const resultados = useMemo(() => {
+  const [resultados, setResultados] = useState<{
+    productos: Producto[]; rubros: Rubro[]; marcas: string[];
+  } | null>(null);
+  const [buscando, setBuscando] = useState(false);
+
+  // Se consulta al servidor con una espera corta: así no se dispara una
+  // búsqueda por tecla, y el navegador nunca recibe el catálogo entero.
+  useEffect(() => {
     const t = q.trim();
-    if (!t) return null;
-    const n = normalizar(t);
-    const coincide = (p: (typeof PRODUCTOS)[number]) =>
-      [p.nombre, p.marca, p.subcategoria, p.codigo, p.specs.join(' ')]
-        .some((c) => normalizar(c).includes(n));
-    return {
-      productos: PRODUCTOS.filter(coincide).slice(0, 5),
-      rubros: RUBROS.filter((r) =>
-        normalizar(r.nombre).includes(n) || r.subcategorias.some((s) => normalizar(s).includes(n))
-      ).slice(0, 3),
-      marcas: MARCAS.filter((m) => normalizar(m).includes(n)).slice(0, 3),
-    };
+    if (!t) {
+      setResultados(null);
+      return;
+    }
+    let vigente = true;
+    setBuscando(true);
+    const id = setTimeout(() => {
+      fetch(`/api/buscar?q=${encodeURIComponent(t)}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (vigente && d) setResultados(d); })
+        .catch(() => { if (vigente) setResultados({ productos: [], rubros: [], marcas: [] }); })
+        .finally(() => { if (vigente) setBuscando(false); });
+    }, 220);
+    return () => { vigente = false; clearTimeout(id); };
   }, [q]);
 
   const vacio = resultados
@@ -90,7 +99,11 @@ export function Buscador({ abierto, cerrar }: { abierto: boolean; cerrar: () => 
         </form>
 
         <div className="max-h-[70vh] overflow-y-auto p-5">
-          {!resultados && (
+          {buscando && !resultados && (
+            <p className="py-8 text-center text-sm text-humo">Buscando…</p>
+          )}
+
+          {!resultados && !buscando && (
             <div>
               <p className="mb-3 font-mono text-[11px] tracking-widest text-humo uppercase">Probá con</p>
               <div className="flex flex-wrap gap-2">
@@ -108,7 +121,7 @@ export function Buscador({ abierto, cerrar }: { abierto: boolean; cerrar: () => 
             </div>
           )}
 
-          {vacio && (
+          {vacio && !buscando && (
             <p className="py-8 text-center text-humo">
               No encontramos productos para <strong>{q}</strong>.
             </p>

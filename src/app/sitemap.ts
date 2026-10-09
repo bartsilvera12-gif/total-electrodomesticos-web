@@ -1,10 +1,20 @@
 import type { MetadataRoute } from 'next';
-import { ESPACIOS, MARCAS, PRODUCTOS, RUBROS } from '@/lib/catalogo/mock';
+import { ESPACIOS } from '@/lib/catalogo/mock';
+import { buscarProductos, obtenerMarcas, obtenerRubros } from '@/lib/catalogo/servicio';
 import { slugificar } from '@/lib/formato';
 import { SITIO } from '@/lib/sitio';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const u = (ruta: string) => `${SITIO.url}${ruta}`;
+
+  // El sitemap sale de la base. Con el catálogo real son miles de URLs, así que
+  // se pide una tanda grande en una sola consulta en vez de producto por producto.
+  const [RUBROS, MARCAS, catalogo] = await Promise.all([
+    obtenerRubros(),
+    obtenerMarcas(),
+    buscarProductos({ porPagina: 5000 }),
+  ]);
+  const PRODUCTOS = catalogo.productos;
   const ahora = new Date();
 
   return [

@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Armazon } from '@/components/Armazon';
 import { GrillaProductos } from '@/components/GrillaProductos';
-import { ESPACIOS, PRODUCTOS, RUBROS } from '@/lib/catalogo/mock';
+import { ESPACIOS } from '@/lib/catalogo/mock';
+import { buscarProductos, obtenerRubros } from '@/lib/catalogo/servicio';
 
 export async function generateStaticParams() {
   return ESPACIOS.map((e) => ({ slug: e.slug }));
@@ -27,7 +28,12 @@ export default async function Espacio({ params }: { params: Promise<{ slug: stri
   const espacio = ESPACIOS.find((e) => e.slug === slug);
   if (!espacio) notFound();
 
-  const productos = PRODUCTOS.filter((p) => espacio.rubros.includes(p.rubro));
+  // Un espacio agrupa varios rubros: se piden en paralelo y se juntan.
+  const RUBROS = await obtenerRubros();
+  const porRubro = await Promise.all(
+    espacio.rubros.map((r) => buscarProductos({ rubro: r, porPagina: 8 })),
+  );
+  const productos = porRubro.flatMap((r) => r.productos);
 
   return (
     <Armazon>

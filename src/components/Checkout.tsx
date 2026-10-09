@@ -3,13 +3,13 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { PRODUCTOS } from '@/lib/catalogo/mock';
+import { useProductos } from '@/lib/catalogo/useProductos';
 import { guaranies } from '@/lib/formato';
 import { useTienda } from '@/lib/tienda/contexto';
 import type { EstadoPago } from '@/lib/tienda/tipos';
 import { FotoProducto } from './FotoProducto';
 
-type Paso = 'datos' | 'redirigiendo' | 'pasarela' | 'rechazado' | 'cancelado';
+type Paso = 'datos' | 'redirigiendo' | 'pasarela' | 'registrando' | 'rechazado' | 'cancelado';
 
 const vacio = { nombre: '', apellido: '', documento: '', telefono: '', correo: '' };
 
@@ -41,7 +41,7 @@ function Campo({
 
 export function Checkout() {
   const router = useRouter();
-  const { carrito, sesion, crearPedido, listo } = useTienda();
+  const { carrito, sesion, vaciarCarrito, listo } = useTienda();
   const [paso, setPaso] = useState<Paso>('datos');
   const [modo, setModo] = useState<'envio' | 'retiro'>('envio');
   const [cliente, setCliente] = useState(vacio);
@@ -62,7 +62,9 @@ export function Checkout() {
     }
   }, [sesion]);
 
-  const porId = new Map(PRODUCTOS.map((p) => [p.id, p]));
+  // Precio y stock frescos del ERP: no se confía en lo que quedó en el navegador
+  const { productos: delCarrito } = useProductos(carrito.map((l) => l.productoId));
+  const porId = new Map(delCarrito.map((p) => [p.id, p]));
   const lineas = carrito.flatMap((l) => {
     const p = porId.get(l.productoId);
     return p ? [{ ...l, producto: p }] : [];
@@ -94,16 +96,39 @@ export function Checkout() {
     setTimeout(() => setPaso('pasarela'), 1600);
   };
 
-  const resolver = (resultado: EstadoPago) => {
+  const [errorPedido, setErrorPedido] = useState<string | null>(null);
+
+  /**
+   * El pedido lo crea el servidor, que recalcula los precios contra el catálogo.
+   * Acá solo se mandan los ids y las cantidades: lo que diga el navegador sobre
+   * el precio no se usa.
+   */
+  const resolver = async (resultado: EstadoPago) => {
     if (resultado === 'rechazado') return setPaso('rechazado');
     if (resultado === 'cancelado') return setPaso('cancelado');
-    const pedido = crearPedido({
-      productos: PRODUCTOS,
-      cliente,
-      entrega: modo === 'envio' ? { modo, ...entrega } : { modo },
-      estadoPago: resultado,
-    });
-    router.push(`/confirmacion?pedido=${pedido.numero}`);
+
+    setPaso('registrando');
+    setErrorPedido(null);
+    try {
+      const res = await fetch('/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lineas: carrito.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad })),
+          cliente,
+          entrega: modo === 'envio' ? { modo, ...entrega } : { modo },
+          estadoPago: resultado,
+        }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error ?? 'No se pudo registrar el pedido');
+
+      vaciarCarrito();
+      router.push(`/confirmacion?pedido=${d.numero}`);
+    } catch (e) {
+      setErrorPedido(e instanceof Error ? e.message : 'No se pudo registrar el pedido');
+      setPaso('pasarela');
+    }
   };
 
   if (!listo) {
@@ -127,6 +152,16 @@ export function Checkout() {
       <div className="mx-auto flex max-w-md flex-col items-center gap-5 px-6 py-28 text-center">
         <span className="size-10 animate-girar rounded-full border-3 border-total-200 border-t-total-500" aria-hidden="true" />
         <h1 className="text-xl font-bold">Redireccionando a PagoPar…</h1>
+        <p className="text-sm text-humo">No cierres esta ventana.</p>
+      </div>
+    );
+  }
+
+  if (paso === 'registrando') {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center gap-5 px-6 py-28 text-center">
+        <span className="size-10 animate-girar rounded-full border-3 border-total-200 border-t-total-500" aria-hidden="true" />
+        <h1 className="text-xl font-bold">Registrando tu pedido…</h1>
         <p className="text-sm text-humo">No cierres esta ventana.</p>
       </div>
     );
@@ -162,6 +197,9 @@ export function Checkout() {
               </button>
             ))}
           </div>
+          {errorPedido && (
+            <p className="mt-4 rounded-sm bg-[#f1f2f4] px-3 py-2.5 text-sm">{errorPedido}</p>
+          )}
           <p className="mt-5 text-xs text-humo">
             Pantalla de prueba. La integración real con PagoPar se hace con las claves del comercio.
           </p>

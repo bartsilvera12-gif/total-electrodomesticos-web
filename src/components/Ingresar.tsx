@@ -3,19 +3,21 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import { useTienda } from '@/lib/tienda/contexto';
 
 /**
- * Login y registro.
+ * Cuentas de cliente.
  *
- * No hay backend de autenticación todavía: la sesión se guarda en el navegador
- * con los datos que la persona escribe. Lo importante es que ya no entra como
- * un usuario inventado — el nombre que aparece después es el que ingresó.
+ * Supabase Auth, la misma que usa el ERP pero con usuarios distintos: un
+ * cliente de la tienda está en `auth.users` y NO en `total.usuarios`, así que
+ * no puede entrar al panel ni leer nada del ERP. El RLS se encarga.
  */
 export function Ingresar() {
   const router = useRouter();
   const params = useSearchParams();
   const { ingresar } = useTienda();
+  const [enviando, setEnviando] = useState(false);
   const [solapa, setSolapa] = useState<'ingresar' | 'registro'>('ingresar');
   const [recuperar, setRecuperar] = useState(false);
   const [datos, setDatos] = useState({
@@ -42,7 +44,7 @@ export function Ingresar() {
     </label>
   );
 
-  function enviar(e: React.FormEvent) {
+  async function enviar(e: React.FormEvent) {
     e.preventDefault();
     const err: Record<string, string> = {};
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(datos.correo)) err.correo = 'Ingresá un correo válido';
@@ -54,16 +56,65 @@ export function Ingresar() {
     setErrores(err);
     if (Object.keys(err).length) return;
 
-    ingresar({
-      // Si entra con una cuenta existente todavía no hay de dónde traer el nombre,
-      // así que se usa la parte local del correo hasta que exista el backend.
-      nombre: datos.nombre.trim() || datos.correo.split('@')[0],
-      apellido: datos.apellido.trim(),
-      correo: datos.correo.trim(),
-      documento: datos.documento.trim() || undefined,
-      telefono: datos.telefono.trim() || undefined,
-    });
-    router.push(volverA);
+    setEnviando(true);
+    const sb = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+
+    try {
+      if (solapa === 'registro') {
+        const { data, error } = await sb.auth.signUp({
+          email: datos.correo.trim(),
+          password: datos.clave,
+          options: {
+            // Van en el usuario de auth: la tienda no necesita una tabla propia
+            // de clientes, y cuando el ERP los quiera, salen de los pedidos.
+            data: {
+              nombre: datos.nombre.trim(),
+              apellido: datos.apellido.trim(),
+              documento: datos.documento.trim(),
+              telefono: datos.telefono.trim(),
+            },
+          },
+        });
+        if (error) throw error;
+        if (!data.session) {
+          setErrores({ correo: 'Te mandamos un correo para confirmar la cuenta.' });
+          setEnviando(false);
+          return;
+        }
+      } else {
+        const { error } = await sb.auth.signInWithPassword({
+          email: datos.correo.trim(),
+          password: datos.clave,
+        });
+        if (error) throw error;
+      }
+
+      const { data: { user } } = await sb.auth.getUser();
+      const m = (user?.user_metadata ?? {}) as Record<string, string>;
+      ingresar({
+        nombre: m.nombre || datos.nombre.trim() || datos.correo.split('@')[0],
+        apellido: m.apellido ?? datos.apellido.trim(),
+        correo: datos.correo.trim(),
+        documento: m.documento || datos.documento.trim() || undefined,
+        telefono: m.telefono || datos.telefono.trim() || undefined,
+      });
+      router.push(volverA);
+      router.refresh();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      setErrores({
+        clave: /invalid/i.test(msg)
+          ? 'El correo o la contraseña no coinciden.'
+          : /already/i.test(msg)
+            ? 'Ya existe una cuenta con ese correo.'
+            : 'No pudimos completar la operación. Probá de nuevo.',
+      });
+    } finally {
+      setEnviando(false);
+    }
   }
 
   if (recuperar) {
@@ -73,7 +124,18 @@ export function Ingresar() {
         <p className="mt-2 text-sm text-humo">
           Te enviamos un enlace para crear una nueva contraseña.
         </p>
-        <form onSubmit={(e) => { e.preventDefault(); setRecuperar(false); }} className="mt-6 flex flex-col gap-4">
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            const sb = createBrowserClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL!,
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            );
+            await sb.auth.resetPasswordForEmail(datos.correo.trim());
+            setErrores({ correo: 'Si el correo existe, te llega un enlace en unos minutos.' });
+          }}
+          className="mt-6 flex flex-col gap-4"
+        >
           {campo('correo', 'Correo', 'email')}
           <button type="submit" className="rounded-sm bg-total-500 px-5 py-3.5 text-sm font-bold text-white hover:bg-total-600">
             Enviar enlace
@@ -115,8 +177,12 @@ export function Ingresar() {
         {campo('correo', 'Correo', 'email')}
         {campo('clave', 'Contraseña', 'password')}
 
-        <button type="submit" className="mt-2 rounded-sm bg-total-500 px-5 py-3.5 text-sm font-bold text-white hover:bg-total-600">
-          {solapa === 'registro' ? 'Crear cuenta' : 'Iniciar sesión'}
+        <button
+          type="submit"
+          disabled={enviando}
+          className="mt-2 rounded-sm bg-total-500 px-5 py-3.5 text-sm font-bold text-white hover:bg-total-600 disabled:opacity-60"
+        >
+          {enviando ? 'Un momento…' : solapa === 'registro' ? 'Crear cuenta' : 'Iniciar sesión'}
         </button>
 
         {solapa === 'ingresar' && (
