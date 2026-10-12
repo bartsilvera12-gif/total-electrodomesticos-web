@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { listarCategorias } from '@/lib/admin/consultas';
-import { useDatos } from '@/lib/admin/useDatos';
+import { useDatos } from '@/lib/useDatos';
 import { EditorCategorias } from '@/components/admin/EditorCategorias';
 
 export default function CategoriasPanel() {

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback } from 'react';
 import { resumenPanel } from '@/lib/admin/consultas';
-import { useDatos } from '@/lib/admin/useDatos';
+import { useDatos } from '@/lib/useDatos';
 
 const VACIO = { vendibles: 0, publicados: 0, sinImagen: 0, pedidos: 0 };
 

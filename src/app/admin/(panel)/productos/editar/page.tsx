@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { obtenerProductoPanel } from '@/lib/admin/consultas';
-import { useDatos } from '@/lib/admin/useDatos';
+import { useDatos } from '@/lib/useDatos';
 import { EditorProducto } from '@/components/admin/EditorProducto';
 
 /**

@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { listarProductos } from '@/lib/admin/consultas';
-import { useDatos } from '@/lib/admin/useDatos';
+import { useDatos } from '@/lib/useDatos';
 import { TablaProductos } from '@/components/admin/TablaProductos';
 
 const VACIO = { productos: [], total: 0 };

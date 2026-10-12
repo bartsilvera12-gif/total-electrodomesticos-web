@@ -3,11 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /**
- * Carga datos del panel en el navegador.
+ * Carga datos en el navegador.
  *
- * Antes cada pantalla era un componente de servidor que pedía sus datos antes
- * de renderizar. Sin servidor, la pantalla se dibuja primero y pide después;
- * esto da el estado de carga y el `recargar` para refrescar tras guardar.
+ * Sin servidor, la pantalla se dibuja primero y pide después; esto da el estado
+ * de carga y el `recargar` para refrescar tras guardar.
+ *
+ * Lo usa el panel y también la ficha de producto que se resuelve en el
+ * navegador, por eso vive acá y no en lib/admin.
  */
 export function useDatos<T>(cargar: () => Promise<T>, inicial: T) {
   const [datos, setDatos] = useState<T>(inicial);

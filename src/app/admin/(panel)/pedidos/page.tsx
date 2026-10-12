@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { listarPedidos } from '@/lib/admin/consultas';
-import { useDatos } from '@/lib/admin/useDatos';
+import { useDatos } from '@/lib/useDatos';
 import { TablaPedidos } from '@/components/admin/TablaPedidos';
 
 export default function PedidosPanel() {

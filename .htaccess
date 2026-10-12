@@ -6,6 +6,11 @@
 #
 # Después de tocar el código hay que correr `npm run build` y commitear /out,
 # que es lo que se publica.
+#
+# Publicar un producto desde el ERP NO necesita build: los listados consultan
+# Supabase en el navegador, y la ficha de un producto sin HTML propio la
+# atiende /producto/ver/ (ver la regla más abajo). El build sirve para que esos
+# productos tengan además su HTML indexable.
 
 Options -Indexes
 DirectoryIndex index.html
@@ -24,6 +29,17 @@ DirectoryIndex index.html
   # Nada de código fuente ni de configuración
   RewriteRule ^(src|scripts|supabase|node_modules|\.git|\.next)/ - [F,L]
   RewriteRule ^(package.*\.json|.*\.ts|.*\.tsx|.*\.mjs|.*\.md|.*\.sql|.*\.lock)$ - [F,L]
+
+  # Producto o categoría publicados en el ERP DESPUÉS del último build: su HTML
+  # todavía no existe y sin esto darían 404. Se mandan a una página de respaldo
+  # que resuelve el slug en el navegador, como hace el sitio de Marilia con
+  # Producto.dc.html?id=. Las páginas ya generadas siguen teniendo prioridad:
+  # son las que traen el HTML completo para los buscadores.
+  RewriteCond %{DOCUMENT_ROOT}/out/producto/$1/index.html !-f
+  RewriteRule ^producto/([^/]+)/?$ /out/producto/ver/index.html?slug=$1 [L,QSA]
+
+  RewriteCond %{DOCUMENT_ROOT}/out/categoria/$1/index.html !-f
+  RewriteRule ^categoria/([^/]+)/?$ /out/categoria/ver/index.html?slug=$1 [L,QSA]
 
   # Todo lo demás sale de /out
   RewriteCond %{REQUEST_URI} !^/out/

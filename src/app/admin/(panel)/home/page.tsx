@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 import { obtenerBanners, obtenerConfig } from '@/lib/admin/consultas';
-import { useDatos } from '@/lib/admin/useDatos';
+import { useDatos } from '@/lib/useDatos';
 import { EditorBanners } from '@/components/admin/EditorBanners';
 import { EditorHome } from '@/components/admin/EditorHome';
 
