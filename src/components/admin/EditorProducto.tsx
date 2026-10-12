@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { guardarProducto } from '@/lib/admin/acciones';
 import type { ProductoPanel } from '@/lib/admin/consultas';
-import { guaranies, slugificar } from '@/lib/formato';
+import { guaranies } from '@/lib/formato';
 
 /** Campo del ERP: se muestra para dar contexto, no se edita acá. */
 function DelErp({ etiqueta, valor }: { etiqueta: string; valor: string }) {
@@ -21,9 +21,6 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
   const [pendiente, iniciar] = useTransition();
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
 
-  const [slug, setSlug] = useState(producto.slug ?? slugificar(`${producto.marca ?? ''} ${producto.nombre}`));
-  const [publicado, setPublicado] = useState(producto.publicado);
-  const [orden, setOrden] = useState(producto.orden);
   const [descripcion, setDescripcion] = useState(producto.descripcion ?? '');
   const [ficha, setFicha] = useState(producto.ficha.length ? producto.ficha : [{ etiqueta: '', valor: '' }]);
   const [galeria, setGaleria] = useState<string[]>(producto.galeria);
@@ -38,9 +35,6 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
       try {
         await guardarProducto({
           productoId: producto.id,
-          slug,
-          publicado,
-          orden,
           descripcion,
           ficha: ficha.filter((f) => f.etiqueta.trim() && f.valor.trim()),
           galeria: galeria.filter(Boolean),
@@ -63,41 +57,33 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
 
       <form onSubmit={guardar} className="mt-6 grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-6">
-          <section className="flex flex-col gap-5 border border-linea bg-white p-6">
+          {/*
+            Publicación, orden y dirección se deciden en el ERP, en Inventario.
+            Acá se muestran para dar contexto: duplicar el control llevaría a que
+            los dos lugares digan cosas distintas.
+          */}
+          <section className="flex flex-col gap-3 border border-linea bg-total-50 p-6">
             <h2 className="text-sm font-bold">Publicación</h2>
-
-            <label className="flex cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                checked={publicado}
-                onChange={(e) => setPublicado(e.target.checked)}
-                className="size-4 accent-total-500"
-              />
-              <span className="text-sm font-semibold">Mostrar este producto en la tienda</span>
-            </label>
-
-            <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
-              Enlace
-              <input
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                className="rounded-sm border border-[#c9ced8] px-3 py-2.5 font-mono text-[14px] font-normal"
-              />
-              <span className="font-normal text-humo">
-                La tienda lo va a mostrar en /producto/{slugificar(slug) || '…'}
-              </span>
-            </label>
-
-            <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
-              Orden
-              <input
-                type="number"
-                value={orden}
-                onChange={(e) => setOrden(Number(e.target.value))}
-                className="w-28 rounded-sm border border-[#c9ced8] px-3 py-2.5 text-[15px] font-normal"
-              />
-              <span className="font-normal text-humo">Más bajo aparece antes en los listados.</span>
-            </label>
+            <p className="text-[13px] text-grafito">
+              Qué se publica, en qué orden y con qué dirección se marca en el ERP,
+              en Inventario, con el producto a la vista.
+            </p>
+            <dl className="mt-1 grid gap-2 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-humo">En la tienda</dt>
+                <dd className="font-semibold">{producto.publicado ? 'Publicado' : 'Oculto'}</dd>
+              </div>
+              <div>
+                <dt className="text-humo">Orden</dt>
+                <dd className="font-semibold">{producto.orden}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-humo">Dirección</dt>
+                <dd className="truncate font-mono text-[13px]">
+                  {producto.slug ? `/producto/${producto.slug}` : '—'}
+                </dd>
+              </div>
+            </dl>
           </section>
 
           <section className="flex flex-col gap-5 border border-linea bg-white p-6">

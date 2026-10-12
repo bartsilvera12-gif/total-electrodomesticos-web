@@ -6,6 +6,10 @@ import { empresaId } from './sesion';
 /**
  * Lecturas del panel.
  *
+ * Qué se publica, en qué orden y con qué dirección se decide en el ERP
+ * (`productos.visible_web`, `orden_web`, `slug_web`), desde Inventario. Acá
+ * esos campos se muestran para dar contexto, pero no se editan.
+ *
  * Van con la sesión del administrador, que por el RLS del ERP sí ve lo que la
  * tienda no: productos sin publicar, categorías ocultas, todos los pedidos.
  *
@@ -38,12 +42,14 @@ export interface ProductoPanel {
 
 const COLUMNAS_ERP =
   'id, nombre, sku, precio_venta, stock_actual, activo, destacado, imagen_url, ' +
+  'visible_web, orden_web, slug_web, ' +
   'marcas(nombre), categorias_productos(nombre)';
 
 interface FilaErp {
   id: string; nombre: string; sku: string | null;
   precio_venta: number; stock_actual: number | null;
   activo: boolean; destacado: boolean | null; imagen_url: string | null;
+  visible_web: boolean | null; orden_web: number | null; slug_web: string | null;
   marcas: { nombre: string } | null;
   categorias_productos: { nombre: string } | null;
 }
@@ -68,9 +74,10 @@ function unir(erp: FilaErp, web?: FilaWeb): ProductoPanel {
     imagenUrl: erp.imagen_url,
     marca: erp.marcas?.nombre ?? null,
     categoria: erp.categorias_productos?.nombre ?? null,
-    slug: web?.slug ?? null,
-    publicado: Boolean(web?.publicado),
-    orden: web?.orden ?? 0,
+    // Publicación, orden y dirección los manda el ERP: se marcan en Inventario
+    slug: erp.slug_web,
+    publicado: Boolean(erp.visible_web),
+    orden: erp.orden_web ?? 0,
     descripcion: web?.descripcion ?? null,
     ficha: web?.ficha ?? [],
     galeria: web?.galeria ?? [],
@@ -127,7 +134,9 @@ export interface CategoriaPanel {
 export async function listarCategorias(): Promise<CategoriaPanel[]> {
   const sb = supa();
   const [{ data: cats }, { data: web }] = await Promise.all([
-    sb.from('categorias_productos').select('id, nombre, parent_id, activo, imagen_web_url, imagen_url').order('nombre'),
+    sb.from('categorias_productos')
+      .select('id, nombre, parent_id, activo, imagen_web_url, imagen_url, visible_web, orden_web, destaque_web, slug_web')
+      .order('nombre'),
     sb.from('web_categoria').select('*'),
   ]);
   interface FilaWebCat {
@@ -139,15 +148,19 @@ export async function listarCategorias(): Promise<CategoriaPanel[]> {
   return ((cats ?? []) as Array<{
     id: string; nombre: string; parent_id: string | null; activo: boolean;
     imagen_web_url: string | null; imagen_url: string | null;
+    visible_web: boolean | null; orden_web: number | null;
+    destaque_web: number | null; slug_web: string | null;
   }>).map((c) => {
     const w = porId.get(c.id);
     return {
       id: c.id, nombre: c.nombre, parentId: c.parent_id, activo: c.activo,
-      slug: w?.slug ?? null,
-      publicado: Boolean(w?.publicado),
-      orden: w?.orden ?? 0,
-      destaque: w?.destaque ?? 1,
-      imagenUrl: w?.imagen_url ?? c.imagen_web_url ?? c.imagen_url ?? null,
+      // Publicación, orden, peso y dirección vienen del ERP
+      slug: c.slug_web,
+      publicado: c.visible_web !== false,
+      orden: c.orden_web ?? 0,
+      destaque: c.destaque_web ?? 1,
+      imagenUrl: c.imagen_web_url ?? c.imagen_url ?? null,
+      // El SEO es del sitio
       seoTitulo: w?.seo_titulo ?? null,
       seoDesc: w?.seo_desc ?? null,
     };

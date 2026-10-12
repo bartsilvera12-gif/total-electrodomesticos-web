@@ -31,11 +31,15 @@ function traducir(error: { code?: string; message: string }, slug?: string): Err
 
 // ── Productos ────────────────────────────────────────────────────────────────
 
+/**
+ * Contenido editorial del producto.
+ *
+ * Qué se publica, en qué orden y con qué dirección NO se toca acá: eso vive en
+ * `productos` y se marca desde Inventario del ERP. Lo de acá es lo que el ERP
+ * no tiene por qué cargar: el texto comercial largo, la ficha, la galería y el SEO.
+ */
 export async function guardarProducto(datos: {
   productoId: string;
-  slug: string;
-  publicado: boolean;
-  orden: number;
   descripcion: string;
   ficha: Array<{ etiqueta: string; valor: string }>;
   galeria: string[];
@@ -44,14 +48,13 @@ export async function guardarProducto(datos: {
 }) {
   await exigirAdmin();
   const empresa = await empresaId();
-  const slug = slugificar(datos.slug) || datos.productoId;
 
   const { error } = await supa().from('web_producto').upsert({
     producto_id: datos.productoId,
     empresa_id: empresa,
-    slug,
-    publicado: datos.publicado,
-    orden: datos.orden,
+    // `slug` quedó obsoleta en esta tabla, pero sigue siendo NOT NULL:
+    // se guarda el id para no chocar con el índice único.
+    slug: datos.productoId,
     descripcion: datos.descripcion || null,
     ficha: datos.ficha,
     galeria: datos.galeria,
@@ -59,38 +62,26 @@ export async function guardarProducto(datos: {
     seo_desc: datos.seoDesc || null,
     updated_at: new Date().toISOString(),
   });
-  if (error) throw traducir(error, slug);
-  return { slug };
+  if (error) throw traducir(error);
 }
 
-/** Publica o despublica desde la tabla, sin entrar al detalle. */
+/**
+ * Publica o saca un producto de la tienda.
+ *
+ * Escribe en `productos.visible_web`, el mismo campo que marca el ERP en
+ * Inventario: hay un solo lugar donde vive la decisión, se toque desde donde
+ * se toque.
+ */
 export async function alternarPublicado(productoId: string, publicado: boolean) {
   await exigirAdmin();
-  const sb = supa();
-  const empresa = await empresaId();
+  const cambios: Record<string, unknown> = { visible_web: publicado };
+  // Sacarlo de la tienda también lo saca de los destacados: no tendría dónde verse
+  if (!publicado) cambios.destacado = false;
 
-  const { data: existente } = await sb
-    .from('web_producto').select('slug').eq('producto_id', productoId).maybeSingle();
-
-  if (existente) {
-    const { error } = await sb.from('web_producto')
-      .update({ publicado, updated_at: new Date().toISOString() })
-      .eq('producto_id', productoId);
-    if (error) throw traducir(error);
-    return;
-  }
-
-  // Primera vez que se publica: hace falta un enlace, se arma del nombre
-  const { data: p } = await sb
-    .from('productos').select('nombre, sku').eq('id', productoId).maybeSingle();
-  const base = slugificar(`${p?.nombre ?? ''} ${p?.sku ?? ''}`) || productoId;
-  const { error } = await sb.from('web_producto').insert({
-    producto_id: productoId, empresa_id: empresa, slug: base, publicado,
-  });
-  if (error) throw traducir(error, base);
+  const { error } = await supa().from('productos').update(cambios).eq('id', productoId);
+  if (error) throw traducir(error);
 }
 
-/** El destacado vive en el ERP (`productos.destacado`), no en la capa web. */
 export async function alternarDestacado(productoId: string, destacado: boolean) {
   await exigirAdmin();
   const { error } = await supa().from('productos').update({ destacado }).eq('id', productoId);
@@ -111,21 +102,33 @@ export async function guardarCategoria(datos: {
 }) {
   await exigirAdmin();
   const empresa = await empresaId();
-  const slug = slugificar(datos.slug) || datos.categoriaId;
+  const slug = slugificar(datos.slug) || null;
+  const sb = supa();
 
-  const { error } = await supa().from('web_categoria').upsert({
+  // Lo que ve el cliente va en la tabla del ERP: es lo mismo que se marca en
+  // Inventario → Categorías.
+  const { error: errErp } = await sb.from('categorias_productos').update({
+    visible_web: datos.publicado,
+    orden_web: datos.orden,
+    destaque_web: datos.destaque,
+    imagen_web_url: datos.imagenUrl || null,
+    slug_web: slug,
+  }).eq('id', datos.categoriaId);
+  if (errErp) throw traducir(errErp, slug ?? undefined);
+
+  // El SEO es del sitio y el ERP no lo necesita
+  const { error } = await sb.from('web_categoria').upsert({
     categoria_id: datos.categoriaId,
     empresa_id: empresa,
-    slug,
+    slug: datos.categoriaId,
     publicado: datos.publicado,
     orden: datos.orden,
     destaque: datos.destaque,
-    imagen_url: datos.imagenUrl || null,
     seo_titulo: datos.seoTitulo || null,
     seo_desc: datos.seoDesc || null,
     updated_at: new Date().toISOString(),
   });
-  if (error) throw traducir(error, slug);
+  if (error) throw traducir(error);
 }
 
 // ── Home ─────────────────────────────────────────────────────────────────────
