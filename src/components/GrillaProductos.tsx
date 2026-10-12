@@ -3,7 +3,11 @@ import { TarjetaProducto } from './TarjetaProducto';
 
 export function GrillaProductos({ productos }: { productos: Producto[] }) {
   return (
-    <div className="grid grid-cols-2 gap-px bg-linea lg:grid-cols-4">
+    // Sin `bg-linea` en la grilla: ese gris pintaba las columnas vacías cuando
+    // la fila no se completaba (una búsqueda con un solo resultado dejaba un
+    // bloque gris al costado). Las líneas finas entre tarjetas las da el borde
+    // de cada tarjeta, que ya lo tiene.
+    <div className="grid grid-cols-2 gap-px lg:grid-cols-4">
       {productos.map((p) => (
         <div key={p.id} className="bg-white">
           <TarjetaProducto producto={p} />

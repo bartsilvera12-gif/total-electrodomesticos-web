@@ -277,7 +277,7 @@ export function DetalleProducto({
       {relacionados.length > 0 && (
         <section className="mt-14">
           <h2 className="text-2xl font-bold tracking-tight">También en {rubro?.nombre}</h2>
-          <div className="mt-6 grid grid-cols-2 gap-px bg-linea lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-px lg:grid-cols-4">
             {relacionados.map((r) => (
               <div key={r.id} className="bg-white">
                 <TarjetaProducto producto={r} />
