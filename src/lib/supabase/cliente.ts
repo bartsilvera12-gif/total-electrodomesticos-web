@@ -54,3 +54,26 @@ export function supaBuild(): ClienteTotal {
     auth: { persistSession: false },
   });
 }
+
+/** Bucket publico donde el ERP deja las fotos de producto. */
+export const BUCKET_PRODUCTOS = 'productos-imagenes';
+
+/**
+ * URL publica de una foto subida desde el ERP.
+ *
+ * El ERP guarda la foto en el bucket y deja en el producto el `imagen_path`
+ * (`{empresa_id}/{producto_id}/principal.jpg`), con `imagen_url` en null. El
+ * bucket es publico, asi que la URL se arma sin firmar nada: la web es
+ * estatica y no tiene servidor que pueda firmar.
+ *
+ * `imagen_url` sigue existiendo para fotos alojadas afuera, pegadas a mano.
+ */
+export function urlPublicaImagen(path: string | null | undefined): string | undefined {
+  if (!path) return undefined;
+  if (/^https?:\/\//i.test(path)) return path;
+  const limpio = path.replace(/^\/+/, '');
+  return `${SUPA_URL}/storage/v1/object/public/${BUCKET_PRODUCTOS}/${limpio
+    .split('/')
+    .map(encodeURIComponent)
+    .join('/')}`;
+}

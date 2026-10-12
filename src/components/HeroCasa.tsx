@@ -114,7 +114,22 @@ function Zona({
   );
 }
 
-export function HeroCasa({ rubros }: { rubros: Rubro[] }) {
+/**
+ * `titulo` / `tituloColor` / `bajada` vienen de /admin/home. Si no llegan, se
+ * usan los textos con los que se diseño la portada: la animacion y el layout
+ * no dependen de esto.
+ */
+export function HeroCasa({
+  rubros,
+  titulo = 'Todo para tu casa.',
+  tituloColor = 'Todo en un solo lugar.',
+  bajada = 'Tecnología, electrodomésticos, muebles y productos para acompañar cada espacio de tu hogar.',
+}: {
+  rubros: Rubro[];
+  titulo?: string;
+  tituloColor?: string;
+  bajada?: string;
+}) {
   const [zona, setZona] = useState<string>('living');
   const seccion = useRef<HTMLElement>(null);
 
@@ -203,12 +218,16 @@ export function HeroCasa({ rubros }: { rubros: Rubro[] }) {
             TOTAL ELECTRODOMÉSTICOS
           </p>
           <h1 className="text-[clamp(40px,5vw,76px)] leading-[0.98] font-bold tracking-[-0.035em] text-balance">
-            Todo para tu casa.{' '}
-            <span className="text-total-500">Todo en un solo lugar.</span>
+            {titulo}
+            {tituloColor && (
+              <>
+                {' '}
+                <span className="text-total-500">{tituloColor}</span>
+              </>
+            )}
           </h1>
           <p className="max-w-md text-lg leading-relaxed text-grafito text-pretty">
-            Tecnología, electrodomésticos, muebles y productos para acompañar cada
-            espacio de tu hogar.
+            {bajada}
           </p>
           <div className="flex flex-wrap gap-2.5">
             <Link

@@ -7,6 +7,7 @@ interface Bloque { id: string; nombre: string; visible: boolean }
 
 const BLOQUES_POR_DEFECTO: Bloque[] = [
   { id: 'hero', nombre: 'Hero · La casa Total', visible: true },
+  { id: 'banners', nombre: 'Banners de promo', visible: true },
   { id: 'categorias', nombre: 'Categorías', visible: true },
   { id: 'espacios', nombre: '¿Qué querés equipar?', visible: true },
   { id: 'destacados', nombre: 'Elegidos de Total', visible: true },
@@ -54,7 +55,7 @@ export function EditorHome({ config }: { config: any }) {
   }
 
   return (
-    <form onSubmit={guardar} className="mt-6 grid max-w-4xl gap-6">
+    <form onSubmit={guardar} className="grid gap-6">
       <section className="flex flex-col gap-5 border border-linea bg-white p-6">
         <h2 className="text-sm font-bold">Textos de la portada</h2>
 
@@ -74,6 +75,10 @@ export function EditorHome({ config }: { config: any }) {
             onChange={(e) => setHeroTitulo(e.target.value)}
             className="rounded-sm border border-[#c9ced8] px-3 py-2.5 text-[15px] font-normal"
           />
+          <span className="text-[12px] font-normal text-humo">
+            La parte que va en celeste se marca con «|». Sin «|» se corta
+            después del primer punto.
+          </span>
         </label>
 
         <label className="flex flex-col gap-1.5 text-[13px] font-semibold">

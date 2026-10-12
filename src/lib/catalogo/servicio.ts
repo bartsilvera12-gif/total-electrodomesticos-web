@@ -1,4 +1,4 @@
-import { supa, supaBuild } from '@/lib/supabase/cliente';
+import { supa, supaBuild, urlPublicaImagen } from '@/lib/supabase/cliente';
 import { ESPACIOS, FILTROS_DINAMICOS, LOGOS_MARCA } from './mock';
 import type {
   ConsultaCatalogo, Disponibilidad, Espacio, FiltroDinamico,
@@ -26,7 +26,10 @@ interface FilaCatalogo {
   descripcion_erp: string | null; descripcion_web: string | null;
   precio: number; precio_anterior: number | null;
   stock_actual: number | null; destacado: boolean | null;
-  garantia_meses: number | null; imagen_url: string | null;
+  garantia_meses: number | null;
+  // `imagen_url`: foto alojada afuera (se pega a mano). `imagen_path`: foto
+  // subida desde el ERP al bucket publico. Puede venir una, otra o ninguna.
+  imagen_url: string | null; imagen_path: string | null;
   galeria: string[] | null;
   ficha: Array<{ etiqueta: string; valor: string }> | null;
   orden: number | null; seo_titulo: string | null; seo_desc: string | null;
@@ -36,6 +39,7 @@ interface FilaCatalogo {
 }
 
 function aProducto(f: FilaCatalogo): Producto {
+  const foto = f.imagen_url ?? urlPublicaImagen(f.imagen_path);
   return {
     id: f.id,
     codigo: f.sku ?? '',
@@ -49,8 +53,8 @@ function aProducto(f: FilaCatalogo): Producto {
     precio: Number(f.precio),
     precioAnterior: f.precio_anterior != null ? Number(f.precio_anterior) : undefined,
     disponibilidad: f.disponibilidad,
-    imagen: f.imagen_url ?? f.nombre,
-    imagenUrl: f.imagen_url ?? undefined,
+    imagen: foto ?? f.nombre,
+    imagenUrl: foto,
     galeria: f.galeria ?? [],
     fichaTecnica: f.ficha ?? undefined,
     descripcion: f.descripcion_web ?? f.descripcion_erp ?? undefined,

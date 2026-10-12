@@ -1,6 +1,6 @@
 'use client';
 
-import { supa } from '@/lib/supabase/cliente';
+import { supa, urlPublicaImagen } from '@/lib/supabase/cliente';
 import { empresaId } from './sesion';
 
 /**
@@ -41,14 +41,15 @@ export interface ProductoPanel {
 }
 
 const COLUMNAS_ERP =
-  'id, nombre, sku, precio_venta, stock_actual, activo, destacado, imagen_url, ' +
+  'id, nombre, sku, precio_venta, stock_actual, activo, destacado, imagen_url, imagen_path, ' +
   'visible_web, orden_web, slug_web, ' +
   'marcas(nombre), categorias_productos(nombre)';
 
 interface FilaErp {
   id: string; nombre: string; sku: string | null;
   precio_venta: number; stock_actual: number | null;
-  activo: boolean; destacado: boolean | null; imagen_url: string | null;
+  activo: boolean; destacado: boolean | null;
+  imagen_url: string | null; imagen_path: string | null;
   visible_web: boolean | null; orden_web: number | null; slug_web: string | null;
   marcas: { nombre: string } | null;
   categorias_productos: { nombre: string } | null;
@@ -71,7 +72,7 @@ function unir(erp: FilaErp, web?: FilaWeb): ProductoPanel {
     stock: erp.stock_actual,
     activo: erp.activo,
     destacado: Boolean(erp.destacado),
-    imagenUrl: erp.imagen_url,
+    imagenUrl: erp.imagen_url ?? urlPublicaImagen(erp.imagen_path) ?? null,
     marca: erp.marcas?.nombre ?? null,
     categoria: erp.categorias_productos?.nombre ?? null,
     // Publicación, orden y dirección los manda el ERP: se marcan en Inventario
@@ -189,8 +190,17 @@ export async function resumenPanel() {
   const sb = supa();
   const [vendibles, publicados, sinImagen, pedidos] = await Promise.all([
     sb.from('productos').select('id', { count: 'exact', head: true }).eq('es_vendible', true),
-    sb.from('web_producto').select('producto_id', { count: 'exact', head: true }).eq('publicado', true),
-    sb.from('productos').select('id', { count: 'exact', head: true }).eq('es_vendible', true).is('imagen_url', null),
+    // Publicados: manda `productos.visible_web`, que se marca en el ERP.
+    // `web_producto.publicado` quedo obsoleta en 05_catalogo_desde_el_erp.sql
+    // y contaba 0 aunque hubiera productos en la tienda.
+    sb.from('productos').select('id', { count: 'exact', head: true }).eq('visible_web', true),
+    // Sin foto: ni pegada a mano (`imagen_url`) ni subida al bucket (`imagen_path`).
+    sb
+      .from('productos')
+      .select('id', { count: 'exact', head: true })
+      .eq('es_vendible', true)
+      .is('imagen_url', null)
+      .is('imagen_path', null),
     sb.from('web_pedido').select('id', { count: 'exact', head: true }),
   ]);
   return {
@@ -199,4 +209,42 @@ export async function resumenPanel() {
     sinImagen: sinImagen.count ?? 0,
     pedidos: pedidos.count ?? 0,
   };
+}
+
+// ── Banners de la portada ────────────────────────────────────────────────────
+
+export interface BannerPanel {
+  id: string;
+  titulo: string;
+  bajada: string | null;
+  imagenUrl: string | null;
+  enlace: string | null;
+  activo: boolean;
+  orden: number;
+}
+
+/** Todos los banners, activos e inactivos: el panel tiene que ver los dos. */
+export async function obtenerBanners(): Promise<BannerPanel[]> {
+  const { data, error } = await supa()
+    .from('web_banner')
+    .select('id, titulo, bajada, imagen_url, enlace, activo, orden')
+    .order('orden')
+    .order('created_at');
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((b) => {
+    const r = b as {
+      id: string; titulo: string; bajada: string | null;
+      imagen_url: string | null; enlace: string | null;
+      activo: boolean; orden: number | null;
+    };
+    return {
+      id: r.id,
+      titulo: r.titulo,
+      bajada: r.bajada,
+      imagenUrl: r.imagen_url,
+      enlace: r.enlace,
+      activo: r.activo,
+      orden: r.orden ?? 0,
+    };
+  });
 }

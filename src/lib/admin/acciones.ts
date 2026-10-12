@@ -166,3 +166,57 @@ export async function cambiarEstadoPedido(pedidoId: string, estado: string) {
     .eq('id', pedidoId);
   if (error) throw traducir(error);
 }
+
+// ── Banners de la portada ────────────────────────────────────────────────────
+
+export interface BannerEntrada {
+  /** Sin id = banner nuevo. */
+  id?: string;
+  titulo: string;
+  bajada: string;
+  imagenUrl: string;
+  enlace: string;
+  activo: boolean;
+  orden: number;
+}
+
+/** Crea o actualiza un banner. Devuelve el id (util para el que recien nace). */
+export async function guardarBanner(datos: BannerEntrada): Promise<string> {
+  await exigirAdmin();
+  const empresa = await empresaId();
+
+  const fila = {
+    empresa_id: empresa,
+    titulo: datos.titulo.trim(),
+    bajada: datos.bajada.trim() || null,
+    imagen_url: datos.imagenUrl.trim() || null,
+    enlace: datos.enlace.trim() || null,
+    activo: datos.activo,
+    orden: datos.orden,
+  };
+
+  const q = datos.id
+    ? supa().from('web_banner').update(fila).eq('id', datos.id).select('id').maybeSingle()
+    : supa().from('web_banner').insert(fila).select('id').maybeSingle();
+
+  const { data, error } = await q;
+  if (error) throw traducir(error);
+  const id = (data as { id?: string } | null)?.id ?? datos.id;
+  if (!id) throw new Error('No se pudo guardar el banner.');
+  return id;
+}
+
+export async function borrarBanner(bannerId: string) {
+  await exigirAdmin();
+  const { error } = await supa().from('web_banner').delete().eq('id', bannerId);
+  if (error) throw traducir(error);
+}
+
+/** Reescribe el orden de toda la lista en una sola pasada. */
+export async function reordenarBanners(ids: string[]) {
+  await exigirAdmin();
+  for (let i = 0; i < ids.length; i++) {
+    const { error } = await supa().from('web_banner').update({ orden: i }).eq('id', ids[i]);
+    if (error) throw traducir(error);
+  }
+}
