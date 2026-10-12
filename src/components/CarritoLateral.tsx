@@ -82,7 +82,7 @@ export function CarritoLateral({
             <ul className="flex-1 divide-y divide-linea overflow-y-auto">
               {lineas.map((l) => (
                 <li key={l.productoId} className="flex gap-3 p-4">
-                  <FotoProducto descripcion={l.producto.imagen} className="size-20 shrink-0" />
+                  <FotoProducto descripcion={l.producto.imagen} url={l.producto.imagenUrl} className="size-20 shrink-0" />
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <span className="font-mono text-[10px] tracking-widest text-humo uppercase">
                       {l.producto.marca}

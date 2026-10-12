@@ -53,7 +53,7 @@ function aProducto(f: FilaCatalogo): Producto {
     precio: Number(f.precio),
     precioAnterior: f.precio_anterior != null ? Number(f.precio_anterior) : undefined,
     disponibilidad: f.disponibilidad,
-    imagen: foto ?? f.nombre,
+    imagen: f.nombre,
     imagenUrl: foto,
     galeria: f.galeria ?? [],
     fichaTecnica: f.ficha ?? undefined,

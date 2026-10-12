@@ -314,7 +314,7 @@ export function Checkout() {
           <ul className="mt-4 flex flex-col gap-4">
             {lineas.map((l) => (
               <li key={l.productoId} className="flex gap-3">
-                <FotoProducto descripcion={l.producto.imagen} className="size-16 shrink-0" />
+                <FotoProducto descripcion={l.producto.imagen} url={l.producto.imagenUrl} className="size-16 shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{l.producto.nombre}</p>
                   <p className="text-xs text-humo">{l.producto.marca} · × {l.cantidad}</p>

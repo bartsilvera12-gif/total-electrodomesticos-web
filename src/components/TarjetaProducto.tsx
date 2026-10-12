@@ -29,6 +29,7 @@ export function TarjetaProducto({ producto }: { producto: Producto }) {
       <Link href={`/producto/${producto.slug}`} className="block overflow-hidden">
         <FotoProducto
           descripcion={producto.imagen}
+          url={producto.imagenUrl}
           className="aspect-4/3 transition-transform duration-500 group-hover:scale-[1.04]"
         />
       </Link>

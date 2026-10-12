@@ -37,6 +37,11 @@ export function DetalleProducto({
     router.push('/checkout');
   };
 
+  // Foto principal del ERP + galería editorial del panel, sin huecos.
+  const galeria = [producto.imagenUrl, ...(producto.galeria ?? [])].filter(
+    (u): u is string => Boolean(u),
+  );
+
   return (
     <div className="mx-auto max-w-[1400px] px-6 py-10">
       <nav aria-label="Migas" className="mb-6 flex flex-wrap gap-1.5 text-[13px] text-humo">
@@ -53,19 +58,31 @@ export function DetalleProducto({
 
       <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr]">
         <div>
-          <FotoProducto descripcion={producto.imagen} className="aspect-4/3 w-full" />
-          <div className="mt-3 grid grid-cols-4 gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <FotoProducto
-                key={i}
-                descripcion={i === 0 ? producto.imagen : 'pendiente'}
-                className={`aspect-square ${i === 0 ? 'ring-2 ring-total-500' : ''}`}
-              />
-            ))}
-          </div>
-          <p className="mt-3 text-[13px] text-humo">
-            Las imágenes se cargan desde el panel web. Todavía no hay fotos para este artículo.
-          </p>
+          <FotoProducto
+            descripcion={producto.imagen}
+            url={producto.imagenUrl}
+            className="aspect-4/3 w-full"
+          />
+          {/* Miniaturas: la principal (del ERP) y las de la galería, que se
+              cargan desde el panel. Solo las que existen de verdad. */}
+          {galeria.length > 1 && (
+            <div className="mt-3 grid grid-cols-4 gap-3">
+              {galeria.slice(0, 4).map((url, i) => (
+                <FotoProducto
+                  key={url}
+                  descripcion={producto.imagen}
+                  url={url}
+                  className={`aspect-square ${i === 0 ? 'ring-2 ring-total-500' : ''}`}
+                />
+              ))}
+            </div>
+          )}
+          {galeria.length === 0 && (
+            <p className="mt-3 text-[13px] text-humo">
+              Las fotos se cargan desde Inventario del ERP. Todavía no hay
+              ninguna para este artículo.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-5">
