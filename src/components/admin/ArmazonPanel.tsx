@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { supa } from '@/lib/supabase/cliente';
 import type { Administrador } from '@/lib/admin/sesion';
 
 const SECCIONES = [
@@ -26,13 +26,8 @@ export function ArmazonPanel({
     href === '/admin' ? ruta === '/admin' : ruta.startsWith(href);
 
   async function salir() {
-    const sb = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    );
-    await sb.auth.signOut();
+    await supa().auth.signOut();
     router.replace('/admin/ingresar');
-    router.refresh();
   }
 
   return (

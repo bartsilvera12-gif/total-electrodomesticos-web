@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { guardarProducto } from '@/lib/admin/acciones';
 import type { ProductoPanel } from '@/lib/admin/consultas';
@@ -19,7 +18,6 @@ function DelErp({ etiqueta, valor }: { etiqueta: string; valor: string }) {
 }
 
 export function EditorProducto({ producto }: { producto: ProductoPanel }) {
-  const router = useRouter();
   const [pendiente, iniciar] = useTransition();
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
 
@@ -50,7 +48,6 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
           seoDesc,
         });
         setMensaje({ tipo: 'ok', texto: 'Guardado. Ya se ve en la tienda.' });
-        router.refresh();
       } catch (err) {
         setMensaje({ tipo: 'error', texto: err instanceof Error ? err.message : 'No se pudo guardar' });
       }

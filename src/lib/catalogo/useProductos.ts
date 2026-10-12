@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import type { Producto } from './tipos';
+import { obtenerProductosPorId } from './servicio';
 
 /**
  * Resuelve productos por id contra la base.
@@ -22,9 +23,8 @@ export function useProductos(ids: string[]): { productos: Producto[]; cargando: 
     }
     let vigente = true;
     setCargando(true);
-    fetch(`/api/productos?ids=${encodeURIComponent(clave)}`)
-      .then((r) => (r.ok ? r.json() : { productos: [] }))
-      .then((d) => { if (vigente) setProductos(d.productos ?? []); })
+    obtenerProductosPorId(clave.split(','))
+      .then((p) => { if (vigente) setProductos(p); })
       .catch(() => { if (vigente) setProductos([]); })
       .finally(() => { if (vigente) setCargando(false); });
     return () => { vigente = false; };

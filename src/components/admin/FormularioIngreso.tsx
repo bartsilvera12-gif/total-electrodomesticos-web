@@ -2,8 +2,9 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { useEffect, useState } from 'react';
+import { supa } from '@/lib/supabase/cliente';
+import { obtenerAdministrador } from '@/lib/admin/sesion';
 
 /**
  * Ingreso al panel.
@@ -18,16 +19,17 @@ export function FormularioIngreso() {
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
+  // Con sesión abierta, directo al panel
+  useEffect(() => {
+    obtenerAdministrador().then((a) => { if (a) router.replace('/admin'); });
+  }, [router]);
+
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     setEnviando(true);
     setError(null);
 
-    const sb = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    );
-    const { error: err } = await sb.auth.signInWithPassword({
+    const { error: err } = await supa().auth.signInWithPassword({
       email: correo.trim(),
       password: clave,
     });
@@ -38,10 +40,17 @@ export function FormularioIngreso() {
       return;
     }
 
-    // El layout del panel vuelve a validar contra total.usuarios: tener sesión
-    // en Supabase no alcanza, hay que ser admin del ERP.
+    // Tener sesión en Supabase no alcanza: hay que estar en total.usuarios con
+    // rol admin. Se verifica acá para dar un mensaje claro; el RLS lo frena igual.
+    const admin = await obtenerAdministrador();
+    if (!admin) {
+      await supa().auth.signOut();
+      setError('Ese usuario no administra la tienda. Tiene que ser admin del ERP.');
+      setEnviando(false);
+      return;
+    }
+
     router.replace('/admin');
-    router.refresh();
   }
 
   return (

@@ -7,7 +7,11 @@ import { LOGOS_MARCA } from '@/lib/catalogo/mock';
 import { obtenerMarcas, obtenerRubros } from '@/lib/catalogo/servicio';
 import { slugificar } from '@/lib/formato';
 
-// Las marcas salen de la base: se renderizan a demanda.
+/** El build pregunta a la base qué marcas hay y genera una página por cada una. */
+export async function generateStaticParams() {
+  const marcas = await obtenerMarcas();
+  return marcas.map((m) => ({ slug: slugificar(m) }));
+}
 
 export async function generateMetadata({
   params,

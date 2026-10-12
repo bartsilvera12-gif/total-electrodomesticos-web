@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { Producto, Rubro } from '@/lib/catalogo/tipos';
+import { sugerencias } from '@/lib/catalogo/servicio';
 import { slugificar } from '@/lib/formato';
 import { guaranies } from '@/lib/formato';
 
@@ -50,9 +51,8 @@ export function Buscador({ abierto, cerrar }: { abierto: boolean; cerrar: () => 
     let vigente = true;
     setBuscando(true);
     const id = setTimeout(() => {
-      fetch(`/api/buscar?q=${encodeURIComponent(t)}`)
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => { if (vigente && d) setResultados(d); })
+      sugerencias(t)
+        .then((d) => { if (vigente) setResultados(d); })
         .catch(() => { if (vigente) setResultados({ productos: [], rubros: [], marcas: [] }); })
         .finally(() => { if (vigente) setBuscando(false); });
     }, 220);

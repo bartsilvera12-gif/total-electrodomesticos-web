@@ -1,6 +1,4 @@
 import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { obtenerAdministrador } from '@/lib/admin/sesion';
 import { FormularioIngreso } from '@/components/admin/FormularioIngreso';
 
 export const metadata: Metadata = {
@@ -8,7 +6,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function IngresarAlPanel() {
-  if (await obtenerAdministrador()) redirect('/admin');
+export default function IngresarAlPanel() {
+  // Si ya hay sesión, el propio formulario manda al panel: en estático no hay
+  // servidor que pueda redirigir antes de servir la página.
   return <FormularioIngreso />;
 }

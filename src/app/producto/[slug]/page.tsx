@@ -2,12 +2,23 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Armazon } from '@/components/Armazon';
 import { DetalleProducto } from '@/components/DetalleProducto';
-import { obtenerProductoPorSlug, obtenerRelacionados, obtenerRubro } from '@/lib/catalogo/servicio';
+import {
+  obtenerProductoPorSlug, obtenerRelacionados, obtenerRubro, slugsDeProductos,
+} from '@/lib/catalogo/servicio';
 import { guaranies } from '@/lib/formato';
 import { SITIO } from '@/lib/sitio';
 
-// Sin generateStaticParams: el catálogo real son miles de artículos y cambian
-// desde el ERP. Se renderizan a demanda.
+/**
+ * Una página por producto publicado.
+ *
+ * Un producto que se publique después del último build no tiene su página hasta
+ * el próximo: conviene volver a buildear y pushear cada tanto, o después de
+ * publicar varios.
+ */
+export async function generateStaticParams() {
+  const slugs = await slugsDeProductos();
+  return slugs.map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({
   params,

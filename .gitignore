@@ -13,6 +13,7 @@ node_modules/
 
 # Next.js
 .next/
-out/
+# /out se COMMITEA a propósito: es lo que Hostinger publica.
+# El .htaccess de la raíz mapea el dominio a esa carpeta.
 next-env.d.ts
 *.tsbuildinfo

@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { guardarConfig } from '@/lib/admin/acciones';
 
@@ -19,7 +18,6 @@ const BLOQUES_POR_DEFECTO: Bloque[] = [
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function EditorHome({ config }: { config: any }) {
-  const router = useRouter();
   const [pendiente, iniciar] = useTransition();
   const [mensaje, setMensaje] = useState<string | null>(null);
 
@@ -49,7 +47,6 @@ export function EditorHome({ config }: { config: any }) {
           barraSuperior: barra, heroTitulo, heroBajada, seoTitulo, seoDesc, bloques,
         });
         setMensaje('Guardado. Ya se ve en la tienda.');
-        router.refresh();
       } catch (err) {
         setMensaje(err instanceof Error ? err.message : 'No se pudo guardar');
       }

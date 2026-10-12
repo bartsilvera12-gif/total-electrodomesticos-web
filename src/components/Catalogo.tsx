@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { ETIQUETA_DISPONIBILIDAD, FILTROS_DINAMICOS } from '@/lib/catalogo/mock';
+import { buscarProductos } from '@/lib/catalogo/servicio';
 import type { Disponibilidad, Producto, Rubro } from '@/lib/catalogo/tipos';
 import { GrillaEsqueleto, GrillaProductos } from './GrillaProductos';
 
@@ -79,27 +80,24 @@ export function Catalogo({
 
   // El filtrado y el paginado ocurren en la base: con el catálogo real son
   // miles de artículos y el brief pide no mandarlos todos al navegador.
-  const consultar = useCallback(async (pagina: number, acumular: boolean) => {
+  const consultar = useCallback(async (pag: number, acumular: boolean) => {
     const r = RANGOS.find((x) => x.id === rango);
-    const p = new URLSearchParams();
-    if (rubroFijo) p.set('rubro', rubroFijo);
-    if (subcategoria) p.set('subcategoria', subcategoria);
-    if (marcas.length) p.set('marcas', marcas.join(','));
-    if (disponibilidad.length) p.set('disponibilidad', disponibilidad.join(','));
-    if (r?.min !== undefined) p.set('precioMin', String(r.min));
-    if (r?.max !== undefined) p.set('precioMax', String(r.max));
-    if (soloOfertas) p.set('ofertas', '1');
-    if (busquedaInicial?.trim()) p.set('q', busquedaInicial.trim());
-    p.set('orden', orden);
-    p.set('pagina', String(pagina));
-    p.set('porPagina', String(POR_PAGINA));
-
     setCargando(true);
     setError(null);
     try {
-      const res = await fetch(`/api/catalogo?${p}`);
-      if (!res.ok) throw new Error('No pudimos cargar los productos');
-      const d = await res.json();
+      const d = await buscarProductos({
+        rubro: rubroFijo,
+        subcategoria: subcategoria ?? undefined,
+        marcas,
+        disponibilidad,
+        precioMin: r?.min,
+        precioMax: r?.max,
+        soloOfertas,
+        orden,
+        busqueda: busquedaInicial?.trim() || undefined,
+        pagina: pag,
+        porPagina: POR_PAGINA,
+      });
       setProductos((prev) => (acumular ? [...prev, ...d.productos] : d.productos));
       setTotal(d.total);
       setHayMas(d.hayMas);

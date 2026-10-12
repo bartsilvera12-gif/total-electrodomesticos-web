@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useProductos } from '@/lib/catalogo/useProductos';
 import { guaranies } from '@/lib/formato';
 import { useTienda } from '@/lib/tienda/contexto';
+import { crearPedido } from '@/lib/tienda/pedidos';
 import type { EstadoPago } from '@/lib/tienda/tipos';
 import { FotoProducto } from './FotoProducto';
 
@@ -110,21 +111,15 @@ export function Checkout() {
     setPaso('registrando');
     setErrorPedido(null);
     try {
-      const res = await fetch('/api/pedidos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lineas: carrito.map((l) => ({ productoId: l.productoId, cantidad: l.cantidad })),
-          cliente,
-          entrega: modo === 'envio' ? { modo, ...entrega } : { modo },
-          estadoPago: resultado,
-        }),
+      const numero = await crearPedido({
+        lineas: carrito,
+        cliente,
+        entrega: modo === 'envio' ? { modo, ...entrega } : { modo },
+        estadoPago: resultado,
       });
-      const d = await res.json();
-      if (!res.ok) throw new Error(d.error ?? 'No se pudo registrar el pedido');
 
       vaciarCarrito();
-      router.push(`/confirmacion?pedido=${d.numero}`);
+      router.push(`/confirmacion/?pedido=${numero}`);
     } catch (e) {
       setErrorPedido(e instanceof Error ? e.message : 'No se pudo registrar el pedido');
       setPaso('pasarela');

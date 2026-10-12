@@ -1,61 +1,56 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * El genérico de SupabaseClient fija el schema en el tipo, y como acá no es
- * `public` hay que aflojarlo. Mismo criterio que usa el ERP.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ClienteTotal = SupabaseClient<any, any, any, any, any>;
-
-/**
- * Clientes de Supabase.
+ * Cliente de Supabase.
  *
- * La web comparte el schema `total` con el ERP: el ERP es la fuente de verdad
- * de producto, precio y stock, así que no hay nada que sincronizar.
+ * La web se sirve como archivos estáticos, así que no hay servidor: todo lo
+ * resuelve el navegador. La clave anon es pública por diseño —va en el bundle y
+ * se ve en el inspector— y lo que protege los datos es el RLS.
  *
  * REGLA QUE NO SE NEGOCIA: la tienda lee por las vistas `web_catalogo`,
  * `web_categoria_publica` y `web_marca_publica`. Nunca `total.productos`, que
- * tiene la columna `costo_promedio`. Las vistas no la incluyen.
+ * tiene `costo_promedio`. Las vistas no la incluyen, y además el RLS del ERP
+ * bloquea esa tabla a quien no sea del ERP.
  */
+
+export const SUPA_URL = 'https://api.neura.com.py';
+
+// Clave anon de la Supabase compartida. Es pública: identifica al proyecto, no
+// autoriza nada por sí sola.
+export const SUPA_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzc0MTAxNDYxLCJleHAiOjE5MzE3ODE0NjF9.7_wAph8IolPMXtgfpezSwS5XR62IdD__qhqCywLDp3Q';
 
 export const SCHEMA = 'total';
 
-function requerido(nombre: string, valor: string | undefined): string {
-  if (!valor) {
-    throw new Error(
-      `Falta la variable de entorno ${nombre}. En local va en .env.local; en Vercel, en Settings → Environment Variables.`,
-    );
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ClienteTotal = SupabaseClient<any, any, any, any, any>;
+
+let instancia: ClienteTotal | null = null;
+
+/**
+ * Una sola instancia: así la sesión se comparte entre todas las pantallas.
+ * Solo para el navegador — guarda la sesión, que necesita localStorage.
+ */
+export function supa(): ClienteTotal {
+  if (typeof window === 'undefined') {
+    throw new Error('supa() es del navegador. En el build usá supaBuild().');
   }
-  return valor;
+  if (!instancia) {
+    instancia = createClient(SUPA_URL, SUPA_KEY, {
+      db: { schema: SCHEMA },
+      auth: { persistSession: true, autoRefreshToken: true },
+    });
+  }
+  return instancia;
 }
 
 /**
- * Cliente público: el que usa el navegador y el render de la tienda.
- * Con la anon key solo alcanza lo que el RLS permite, que son las vistas
- * del catálogo y los pedidos propios.
+ * Para leer durante el build, cuando todavía no hay navegador.
+ * Sin sesión: solo ve lo público, que es justo lo que se va a generar.
  */
-export function clientePublico(): ClienteTotal {
-  return createClient(
-    requerido('NEXT_PUBLIC_SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL),
-    requerido('NEXT_PUBLIC_SUPABASE_ANON_KEY', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
-    { db: { schema: SCHEMA }, auth: { persistSession: false } },
-  );
-}
-
-/**
- * Cliente con service role. SOLO del lado del servidor.
- *
- * Saltea el RLS, así que nunca puede terminar en un componente de cliente ni en
- * una variable NEXT_PUBLIC_. Se usa para el panel y para crear pedidos, que es
- * donde hay que validar precios contra el ERP en vez de confiar en el navegador.
- */
-export function clienteServidor(): ClienteTotal {
-  if (typeof window !== 'undefined') {
-    throw new Error('clienteServidor() no puede usarse en el navegador: expondría la service role key.');
-  }
-  return createClient(
-    requerido('NEXT_PUBLIC_SUPABASE_URL', process.env.NEXT_PUBLIC_SUPABASE_URL),
-    requerido('SUPABASE_SERVICE_ROLE_KEY', process.env.SUPABASE_SERVICE_ROLE_KEY),
-    { db: { schema: SCHEMA }, auth: { autoRefreshToken: false, persistSession: false } },
-  );
+export function supaBuild(): ClienteTotal {
+  return createClient(SUPA_URL, SUPA_KEY, {
+    db: { schema: SCHEMA },
+    auth: { persistSession: false },
+  });
 }

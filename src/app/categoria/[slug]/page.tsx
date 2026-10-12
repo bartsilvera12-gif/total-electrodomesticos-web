@@ -18,8 +18,14 @@ async function resolver(slug: string) {
   };
 }
 
-// Sin generateStaticParams: las categorías salen de la base y cambian desde el
-// panel. Se renderizan a demanda y Next las cachea.
+/** Una página por categoría y por subcategoría, con lo que hay en la base. */
+export async function generateStaticParams() {
+  const rubros = await obtenerRubros();
+  return [
+    ...rubros.map((r) => ({ slug: r.slug })),
+    ...rubros.flatMap((r) => r.subcategorias.map((s) => ({ slug: slugificar(s) }))),
+  ];
+}
 
 export async function generateMetadata({
   params,

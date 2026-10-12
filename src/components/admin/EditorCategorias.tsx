@@ -1,13 +1,13 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { guardarCategoria } from '@/lib/admin/acciones';
 import type { CategoriaPanel } from '@/lib/admin/consultas';
 import { slugificar } from '@/lib/formato';
 
-export function EditorCategorias({ categorias }: { categorias: CategoriaPanel[] }) {
-  const router = useRouter();
+export function EditorCategorias({
+  categorias, alRecargar,
+}: { categorias: CategoriaPanel[]; alRecargar: () => void }) {
   const [pendiente, iniciar] = useTransition();
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [filas, setFilas] = useState(categorias);
@@ -30,7 +30,7 @@ export function EditorCategorias({ categorias }: { categorias: CategoriaPanel[] 
           seoDesc: c.seoDesc ?? '',
         });
         setMensaje(`"${c.nombre}" guardada.`);
-        router.refresh();
+        alRecargar();
       } catch (e) {
         setMensaje(e instanceof Error ? e.message : 'No se pudo guardar');
       }

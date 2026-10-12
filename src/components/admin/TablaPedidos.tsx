@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { cambiarEstadoPedido } from '@/lib/admin/acciones';
 import { fechaCorta, guaranies } from '@/lib/formato';
@@ -19,8 +18,9 @@ interface Pedido {
   web_pedido_item: Item[];
 }
 
-export function TablaPedidos({ pedidos }: { pedidos: Pedido[] }) {
-  const router = useRouter();
+export function TablaPedidos({
+  pedidos, alRecargar,
+}: { pedidos: Pedido[]; alRecargar: () => void }) {
   const [pendiente, iniciar] = useTransition();
   const [abierto, setAbierto] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export function TablaPedidos({ pedidos }: { pedidos: Pedido[] }) {
       setError(null);
       try {
         await cambiarEstadoPedido(id, estado);
-        router.refresh();
+        alRecargar();
       } catch (e) {
         setError(e instanceof Error ? e.message : 'No se pudo actualizar');
       }

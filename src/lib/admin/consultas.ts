@@ -1,14 +1,17 @@
-import { clienteServidor } from '@/lib/supabase/cliente';
+'use client';
+
+import { supa } from '@/lib/supabase/cliente';
 import { empresaId } from './sesion';
 
 /**
  * Lecturas del panel.
  *
- * Van con service role porque el panel sí necesita ver lo que la tienda no:
- * productos sin publicar, categorías ocultas, todos los pedidos.
+ * Van con la sesión del administrador, que por el RLS del ERP sí ve lo que la
+ * tienda no: productos sin publicar, categorías ocultas, todos los pedidos.
  *
- * Lo que NUNCA se trae es `costo_promedio`. El panel administra contenido, no
- * necesita el costo, y pedirlo sería abrir la puerta a que termine en el HTML.
+ * Las columnas se piden una por una y `costo_promedio` NUNCA está en la lista.
+ * El panel administra contenido y no necesita el costo; pedirlo con `select(*)`
+ * sería abrir la puerta a que termine en el HTML.
  */
 
 export interface ProductoPanel {
@@ -80,7 +83,7 @@ export async function listarProductos(opts: {
   busqueda?: string; soloSinPublicar?: boolean; pagina?: number; porPagina?: number;
 } = {}): Promise<{ productos: ProductoPanel[]; total: number }> {
   const { busqueda, soloSinPublicar, pagina = 1, porPagina = 25 } = opts;
-  const sb = clienteServidor();
+  const sb = supa();
 
   let q = sb.from('productos').select(COLUMNAS_ERP, { count: 'exact' }).eq('es_vendible', true);
   if (busqueda?.trim()) {
@@ -107,7 +110,7 @@ export async function listarProductos(opts: {
 }
 
 export async function obtenerProductoPanel(id: string): Promise<ProductoPanel | null> {
-  const sb = clienteServidor();
+  const sb = supa();
   const { data } = await sb.from('productos').select(COLUMNAS_ERP).eq('id', id).maybeSingle();
   if (!data) return null;
   const { data: web } = await sb
@@ -122,13 +125,21 @@ export interface CategoriaPanel {
 }
 
 export async function listarCategorias(): Promise<CategoriaPanel[]> {
-  const sb = clienteServidor();
+  const sb = supa();
   const [{ data: cats }, { data: web }] = await Promise.all([
     sb.from('categorias_productos').select('id, nombre, parent_id, activo, imagen_web_url, imagen_url').order('nombre'),
     sb.from('web_categoria').select('*'),
   ]);
-  const porId = new Map((web ?? []).map((w) => [w.categoria_id, w]));
-  return (cats ?? []).map((c) => {
+  interface FilaWebCat {
+    categoria_id: string; slug: string; publicado: boolean; orden: number;
+    destaque: number; imagen_url: string | null;
+    seo_titulo: string | null; seo_desc: string | null;
+  }
+  const porId = new Map(((web ?? []) as FilaWebCat[]).map((w) => [w.categoria_id, w]));
+  return ((cats ?? []) as Array<{
+    id: string; nombre: string; parent_id: string | null; activo: boolean;
+    imagen_web_url: string | null; imagen_url: string | null;
+  }>).map((c) => {
     const w = porId.get(c.id);
     return {
       id: c.id, nombre: c.nombre, parentId: c.parent_id, activo: c.activo,
@@ -144,14 +155,14 @@ export async function listarCategorias(): Promise<CategoriaPanel[]> {
 }
 
 export async function obtenerConfig() {
-  const sb = clienteServidor();
+  const sb = supa();
   const empresa = await empresaId();
   const { data } = await sb.from('web_config').select('*').eq('empresa_id', empresa).maybeSingle();
   return data;
 }
 
 export async function listarPedidos() {
-  const sb = clienteServidor();
+  const sb = supa();
   const { data, error } = await sb
     .from('web_pedido')
     .select('*, web_pedido_item(*)')
@@ -162,7 +173,7 @@ export async function listarPedidos() {
 }
 
 export async function resumenPanel() {
-  const sb = clienteServidor();
+  const sb = supa();
   const [vendibles, publicados, sinImagen, pedidos] = await Promise.all([
     sb.from('productos').select('id', { count: 'exact', head: true }).eq('es_vendible', true),
     sb.from('web_producto').select('producto_id', { count: 'exact', head: true }).eq('publicado', true),

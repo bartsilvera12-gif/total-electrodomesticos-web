@@ -1,18 +1,18 @@
-'use server';
+'use client';
 
-import { revalidatePath } from 'next/cache';
-import { clienteServidor } from '@/lib/supabase/cliente';
+import { supa } from '@/lib/supabase/cliente';
 import { slugificar } from '@/lib/formato';
 import { empresaId, obtenerAdministrador } from './sesion';
 
 /**
  * Escrituras del panel.
  *
- * Todas pasan por acá y todas validan la sesión primero: son Server Actions, o
- * sea endpoints públicos, y sin el control cualquiera podría invocarlas.
+ * Van directo a Supabase con la sesión del administrador. No hay service role
+ * acá: la web es estática y una clave así no puede vivir en el navegador.
  *
- * Usan el service role porque las tablas `web_*` no son escribibles desde el
- * navegador a propósito.
+ * Quien autoriza es el RLS, con `total.es_admin_web()`. El control que hacemos
+ * antes de cada escritura es para dar un mensaje claro, no para proteger: si
+ * alguien lo saltea, la base igual lo rechaza.
  */
 
 async function exigirAdmin() {
@@ -21,10 +21,12 @@ async function exigirAdmin() {
   return admin;
 }
 
-function refrescarTienda(extra: string[] = []) {
-  // La tienda se renderiza en el servidor: sin esto el cambio no se ve.
-  ['/', '/productos', '/ofertas', '/novedades', '/categorias', '/marcas', ...extra]
-    .forEach((r) => revalidatePath(r));
+function traducir(error: { code?: string; message: string }, slug?: string): Error {
+  if (error.code === '23505') return new Error(`Ya hay otro elemento con el enlace "${slug}".`);
+  if (error.code === '42501') {
+    return new Error('Tu usuario no tiene permiso para esto. Tiene que ser admin del ERP.');
+  }
+  return new Error(`No se pudo guardar: ${error.message}`);
 }
 
 // ── Productos ────────────────────────────────────────────────────────────────
@@ -41,12 +43,10 @@ export async function guardarProducto(datos: {
   seoDesc: string;
 }) {
   await exigirAdmin();
-  const sb = clienteServidor();
   const empresa = await empresaId();
-
   const slug = slugificar(datos.slug) || datos.productoId;
 
-  const { error } = await sb.from('web_producto').upsert({
+  const { error } = await supa().from('web_producto').upsert({
     producto_id: datos.productoId,
     empresa_id: empresa,
     slug,
@@ -59,22 +59,14 @@ export async function guardarProducto(datos: {
     seo_desc: datos.seoDesc || null,
     updated_at: new Date().toISOString(),
   });
-
-  if (error) {
-    // El índice único es (empresa, slug): el choque más probable es ese
-    if (error.code === '23505') throw new Error(`Ya hay otro producto con el enlace "${slug}".`);
-    throw new Error(`No se pudo guardar: ${error.message}`);
-  }
-
-  refrescarTienda([`/producto/${slug}`]);
-  revalidatePath('/admin/productos');
+  if (error) throw traducir(error, slug);
   return { slug };
 }
 
-/** Alta rápida: publica o despublica desde la tabla, sin entrar al detalle. */
+/** Publica o despublica desde la tabla, sin entrar al detalle. */
 export async function alternarPublicado(productoId: string, publicado: boolean) {
   await exigirAdmin();
-  const sb = clienteServidor();
+  const sb = supa();
   const empresa = await empresaId();
 
   const { data: existente } = await sb
@@ -84,30 +76,25 @@ export async function alternarPublicado(productoId: string, publicado: boolean) 
     const { error } = await sb.from('web_producto')
       .update({ publicado, updated_at: new Date().toISOString() })
       .eq('producto_id', productoId);
-    if (error) throw new Error(error.message);
-  } else {
-    // Primera vez que se publica: hace falta un enlace. Se arma del nombre.
-    const { data: p } = await sb
-      .from('productos').select('nombre, sku').eq('id', productoId).maybeSingle();
-    const base = slugificar(`${p?.nombre ?? ''} ${p?.sku ?? ''}`) || productoId;
-    const { error } = await sb.from('web_producto').insert({
-      producto_id: productoId, empresa_id: empresa, slug: base, publicado,
-    });
-    if (error) throw new Error(error.message);
+    if (error) throw traducir(error);
+    return;
   }
 
-  refrescarTienda();
-  revalidatePath('/admin/productos');
+  // Primera vez que se publica: hace falta un enlace, se arma del nombre
+  const { data: p } = await sb
+    .from('productos').select('nombre, sku').eq('id', productoId).maybeSingle();
+  const base = slugificar(`${p?.nombre ?? ''} ${p?.sku ?? ''}`) || productoId;
+  const { error } = await sb.from('web_producto').insert({
+    producto_id: productoId, empresa_id: empresa, slug: base, publicado,
+  });
+  if (error) throw traducir(error, base);
 }
 
 /** El destacado vive en el ERP (`productos.destacado`), no en la capa web. */
 export async function alternarDestacado(productoId: string, destacado: boolean) {
   await exigirAdmin();
-  const sb = clienteServidor();
-  const { error } = await sb.from('productos').update({ destacado }).eq('id', productoId);
-  if (error) throw new Error(error.message);
-  refrescarTienda();
-  revalidatePath('/admin/productos');
+  const { error } = await supa().from('productos').update({ destacado }).eq('id', productoId);
+  if (error) throw traducir(error);
 }
 
 // ── Categorías ───────────────────────────────────────────────────────────────
@@ -123,11 +110,10 @@ export async function guardarCategoria(datos: {
   seoDesc: string;
 }) {
   await exigirAdmin();
-  const sb = clienteServidor();
   const empresa = await empresaId();
   const slug = slugificar(datos.slug) || datos.categoriaId;
 
-  const { error } = await sb.from('web_categoria').upsert({
+  const { error } = await supa().from('web_categoria').upsert({
     categoria_id: datos.categoriaId,
     empresa_id: empresa,
     slug,
@@ -139,13 +125,7 @@ export async function guardarCategoria(datos: {
     seo_desc: datos.seoDesc || null,
     updated_at: new Date().toISOString(),
   });
-  if (error) {
-    if (error.code === '23505') throw new Error(`Ya hay otra categoría con el enlace "${slug}".`);
-    throw new Error(`No se pudo guardar: ${error.message}`);
-  }
-
-  refrescarTienda([`/categoria/${slug}`]);
-  revalidatePath('/admin/categorias');
+  if (error) throw traducir(error, slug);
 }
 
 // ── Home ─────────────────────────────────────────────────────────────────────
@@ -159,10 +139,9 @@ export async function guardarConfig(datos: {
   bloques: Array<{ id: string; nombre: string; visible: boolean }>;
 }) {
   await exigirAdmin();
-  const sb = clienteServidor();
   const empresa = await empresaId();
 
-  const { error } = await sb.from('web_config').upsert({
+  const { error } = await supa().from('web_config').upsert({
     empresa_id: empresa,
     barra_superior: datos.barraSuperior || null,
     hero_titulo: datos.heroTitulo || null,
@@ -172,21 +151,15 @@ export async function guardarConfig(datos: {
     bloques: datos.bloques,
     updated_at: new Date().toISOString(),
   });
-  if (error) throw new Error(`No se pudo guardar: ${error.message}`);
-
-  refrescarTienda();
-  revalidatePath('/admin/home');
+  if (error) throw traducir(error);
 }
 
 // ── Pedidos ──────────────────────────────────────────────────────────────────
 
 export async function cambiarEstadoPedido(pedidoId: string, estado: string) {
   await exigirAdmin();
-  const sb = clienteServidor();
-  const { error } = await sb.from('web_pedido')
+  const { error } = await supa().from('web_pedido')
     .update({ estado, updated_at: new Date().toISOString() })
     .eq('id', pedidoId);
-  if (error) throw new Error(`No se pudo actualizar: ${error.message}`);
-  revalidatePath('/admin/pedidos');
-  revalidatePath('/cuenta');
+  if (error) throw traducir(error);
 }

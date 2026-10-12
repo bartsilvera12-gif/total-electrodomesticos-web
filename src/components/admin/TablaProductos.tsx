@@ -2,8 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { alternarDestacado, alternarPublicado } from '@/lib/admin/acciones';
 import type { ProductoPanel } from '@/lib/admin/consultas';
 import { guaranies } from '@/lib/formato';
@@ -11,26 +10,27 @@ import { guaranies } from '@/lib/formato';
 const POR_PAGINA = 25;
 
 export function TablaProductos({
-  productos, total, pagina, busqueda,
-}: { productos: ProductoPanel[]; total: number; pagina: number; busqueda: string }) {
-  const router = useRouter();
-  const params = useSearchParams();
+  productos, total, pagina, busqueda, cargando, errorCarga,
+  alBuscar, alPaginar, alRecargar,
+}: {
+  productos: ProductoPanel[]; total: number; pagina: number; busqueda: string;
+  cargando: boolean; errorCarga: string | null;
+  alBuscar: (q: string) => void;
+  alPaginar: (p: number) => void;
+  alRecargar: () => void;
+}) {
   const [q, setQ] = useState(busqueda);
   const [error, setError] = useState<string | null>(null);
   const [pendiente, iniciar] = useTransition();
 
-  const irA = (cambios: Record<string, string>) => {
-    const p = new URLSearchParams(params.toString());
-    Object.entries(cambios).forEach(([k, v]) => (v ? p.set(k, v) : p.delete(k)));
-    router.push(`/admin/productos?${p}`);
-  };
+  useEffect(() => { setQ(busqueda); }, [busqueda]);
 
   const accion = (fn: () => Promise<void>) =>
     iniciar(async () => {
       setError(null);
       try {
         await fn();
-        router.refresh();
+        alRecargar();
       } catch (e) {
         setError(e instanceof Error ? e.message : 'No se pudo guardar');
       }
@@ -41,7 +41,7 @@ export function TablaProductos({
   return (
     <>
       <form
-        onSubmit={(e) => { e.preventDefault(); irA({ q, pagina: '' }); }}
+        onSubmit={(e) => { e.preventDefault(); alBuscar(q); }}
         className="mt-6 flex flex-wrap gap-2"
       >
         <input
@@ -54,15 +54,21 @@ export function TablaProductos({
           Buscar
         </button>
         {busqueda && (
-          <button type="button" onClick={() => { setQ(''); irA({ q: '', pagina: '' }); }} className="rounded-sm border border-linea px-4 py-2.5 text-sm">
+          <button type="button" onClick={() => { setQ(''); alBuscar(''); }} className="rounded-sm border border-linea px-4 py-2.5 text-sm">
             Limpiar
           </button>
         )}
       </form>
 
-      {error && <p className="mt-4 rounded-sm bg-[#f1f2f4] px-4 py-3 text-sm">{error}</p>}
+      {(error ?? errorCarga) && (
+        <p className="mt-4 rounded-sm bg-[#f1f2f4] px-4 py-3 text-sm">{error ?? errorCarga}</p>
+      )}
 
-      {productos.length === 0 ? (
+      {cargando && !productos.length ? (
+        <p className="mt-8 border border-linea bg-white p-8 text-center text-sm text-humo">
+          Cargando productos…
+        </p>
+      ) : productos.length === 0 ? (
         <p className="mt-8 border border-linea bg-white p-8 text-center text-sm text-humo">
           {busqueda
             ? `No encontramos productos para "${busqueda}".`
@@ -84,7 +90,7 @@ export function TablaProductos({
             </thead>
             <tbody className="divide-y divide-linea">
               {productos.map((p) => (
-                <tr key={p.id} className={pendiente ? 'opacity-60' : ''}>
+                <tr key={p.id} className={pendiente || cargando ? 'opacity-60' : ''}>
                   <td className="p-4">
                     <span className="flex items-center gap-3">
                       {p.imagenUrl ? (
@@ -132,7 +138,7 @@ export function TablaProductos({
                     </label>
                   </td>
                   <td className="p-4">
-                    <Link href={`/admin/productos/${p.id}`} className="font-semibold text-total-500 hover:underline">
+                    <Link href={`/admin/productos/editar?id=${p.id}`} className="font-semibold text-total-500 hover:underline">
                       Editar
                     </Link>
                   </td>
@@ -150,7 +156,7 @@ export function TablaProductos({
             <button
               type="button"
               disabled={pagina <= 1}
-              onClick={() => irA({ pagina: String(pagina - 1) })}
+              onClick={() => alPaginar(pagina - 1)}
               className="rounded-sm border border-linea px-4 py-2 disabled:opacity-40"
             >
               Anterior
@@ -158,7 +164,7 @@ export function TablaProductos({
             <button
               type="button"
               disabled={pagina >= paginas}
-              onClick={() => irA({ pagina: String(pagina + 1) })}
+              onClick={() => alPaginar(pagina + 1)}
               className="rounded-sm border border-linea px-4 py-2 disabled:opacity-40"
             >
               Siguiente

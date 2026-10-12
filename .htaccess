@@ -1,0 +1,31 @@
+# Total Electrodomésticos — Apache (Hostinger)
+#
+# Hostinger sirve la raíz del repo y el sitio compilado vive en /out.
+# Esto lo mapea sin duplicar archivos: lo que el visitante pide como /productos
+# se busca en /out/productos.
+#
+# Después de tocar el código hay que correr `npm run build` y commitear /out,
+# que es lo que se publica.
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # HTTPS (Cloudflare termina el TLS y avisa por esta cabecera)
+  RewriteCond %{HTTP:X-Forwarded-Proto} =http
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [L,R=301]
+
+  # Sin www
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^(.*)$ https://%1/$1 [L,R=301]
+
+  # Nada de código fuente ni de configuración
+  RewriteRule ^(src|scripts|supabase|node_modules|\.git|\.next)/ - [F,L]
+  RewriteRule ^(package.*\.json|.*\.ts|.*\.tsx|.*\.mjs|.*\.md|.*\.sql|.*\.lock)$ - [F,L]
+
+  # Todo lo demás sale de /out
+  RewriteCond %{REQUEST_URI} !^/out/
+  RewriteRule ^(.*)$ /out/$1 [L]
+</IfModule>

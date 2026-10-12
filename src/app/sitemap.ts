@@ -1,4 +1,7 @@
 import type { MetadataRoute } from 'next';
+
+// Export estático: se genera una sola vez, en el build
+export const dynamic = 'force-static';
 import { ESPACIOS } from '@/lib/catalogo/mock';
 import { buscarProductos, obtenerMarcas, obtenerRubros } from '@/lib/catalogo/servicio';
 import { slugificar } from '@/lib/formato';
