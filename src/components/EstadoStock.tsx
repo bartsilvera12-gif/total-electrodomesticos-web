@@ -12,7 +12,7 @@ const ESTILO: Record<Disponibilidad, string> = {
 export function EstadoStock({ estado }: { estado: Disponibilidad }) {
   return (
     <span
-      className={`inline-block px-2.5 py-1 text-[11px] font-semibold tracking-wide ${ESTILO[estado]}`}
+      className={`inline-block shrink-0 whitespace-nowrap px-2.5 py-1 text-[11px] font-semibold tracking-wide ${ESTILO[estado]}`}
     >
       {ETIQUETA_DISPONIBILIDAD[estado]}
     </span>

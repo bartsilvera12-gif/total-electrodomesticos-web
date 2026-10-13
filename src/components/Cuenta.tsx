@@ -15,6 +15,52 @@ const SOLAPAS = [
   { id: 'clave', etiqueta: 'Cambiar contraseña' },
 ] as const;
 
+/**
+ * Los estados que maneja el ERP, agrupados como los piensa un comprador:
+ * una compra está en curso, terminada o cancelada.
+ */
+const GRUPOS = [
+  { id: 'todas', etiqueta: 'Todas' },
+  { id: 'en-curso', etiqueta: 'En curso' },
+  { id: 'entregadas', etiqueta: 'Entregadas' },
+  { id: 'canceladas', etiqueta: 'Canceladas' },
+] as const;
+
+type Grupo = (typeof GRUPOS)[number]['id'];
+
+function grupoDe(p: Pedido): Exclude<Grupo, 'todas'> {
+  if (p.estado === 'cancelado' || p.estadoPago === 'rechazado' || p.estadoPago === 'cancelado') {
+    return 'canceladas';
+  }
+  if (p.estado === 'entregado') return 'entregadas';
+  return 'en-curso';
+}
+
+/** Chip de estado: el color dice de un vistazo cómo viene la compra. */
+function ChipEstado({ pedido }: { pedido: Pedido }) {
+  const g = grupoDe(pedido);
+  const tono =
+    g === 'canceladas'
+      ? 'bg-[#fbe8e9] text-[#a81f27]'
+      : g === 'entregadas'
+      ? 'bg-[#e4f4ec] text-[#0b6b43]'
+      : 'bg-total-50 text-total-600';
+  const pagoPendiente =
+    g === 'en-curso' && pedido.estadoPago !== 'aprobado';
+  return (
+    <span className="flex flex-wrap items-center gap-1.5">
+      <span className={`rounded-full px-2.5 py-1 text-[12px] font-semibold ${tono}`}>
+        {ETIQUETA_ESTADO[pedido.estado]}
+      </span>
+      {pagoPendiente && (
+        <span className="rounded-full bg-[#fbf0dc] px-2.5 py-1 text-[12px] font-semibold text-[#8a5a00]">
+          Pago pendiente
+        </span>
+      )}
+    </span>
+  );
+}
+
 function Seguimiento({ pedido }: { pedido: Pedido }) {
   if (pedido.estado === 'cancelado') {
     return <p className="text-sm text-humo">Este pedido fue cancelado.</p>;
@@ -43,6 +89,7 @@ export function Cuenta() {
   const { sesion, salir, listo } = useTienda();
   const { pedidos, cargando: cargandoPedidos } = usePedidos();
   const [solapa, setSolapa] = useState<(typeof SOLAPAS)[number]['id']>('pedidos');
+  const [grupo, setGrupo] = useState<Grupo>('todas');
   const [abierto, setAbierto] = useState<string | null>(null);
 
   useEffect(() => {
@@ -97,8 +144,39 @@ export function Cuenta() {
               </Link>
             </div>
           ) : (
+            <>
+              <div className="mb-5 flex flex-wrap gap-2">
+                {GRUPOS.map((g) => {
+                  const n =
+                    g.id === 'todas'
+                      ? pedidos.length
+                      : pedidos.filter((p) => grupoDe(p) === g.id).length;
+                  return (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => setGrupo(g.id)}
+                      aria-pressed={grupo === g.id}
+                      className={`rounded-full border px-3.5 py-1.5 text-[13px] font-semibold ${
+                        grupo === g.id
+                          ? 'border-carbon bg-carbon text-white'
+                          : 'border-linea text-grafito hover:border-carbon'
+                      }`}
+                    >
+                      {g.etiqueta}
+                      <span className="ml-1.5 font-normal tabular-nums opacity-70">{n}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {pedidos.filter((p) => grupo === 'todas' || grupoDe(p) === grupo).length === 0 ? (
+                <p className="py-12 text-center text-sm text-humo">
+                  No tenés compras en este estado.
+                </p>
+              ) : (
             <ul className="flex flex-col gap-3">
-              {pedidos.map((p) => (
+              {pedidos.filter((p) => grupo === 'todas' || grupoDe(p) === grupo).map((p) => (
                 <li key={p.numero} className="border border-linea">
                   <button
                     type="button"
@@ -110,7 +188,7 @@ export function Cuenta() {
                       <span className="font-mono text-[12px] text-humo">{p.numero}</span>
                       <span className="block font-semibold">{fechaCorta(p.fechaISO)}</span>
                     </span>
-                    <span className="text-sm">{ETIQUETA_ESTADO[p.estado]}</span>
+                    <ChipEstado pedido={p} />
                     <span className="font-bold">{guaranies(p.total)}</span>
                   </button>
 
@@ -135,6 +213,8 @@ export function Cuenta() {
                 </li>
               ))}
             </ul>
+              )}
+            </>
           )
         )}
 

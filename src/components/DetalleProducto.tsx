@@ -56,8 +56,11 @@ export function DetalleProducto({
         <span className="text-carbon">{producto.nombre}</span>
       </nav>
 
+      {/* `min-w-0` en las columnas: sin eso, la tabla comparativa de abajo
+          estira la grilla y la pagina entera se desliza para los costados en
+          celular, en vez de scrollear dentro de su propio recuadro. */}
       <div className="grid gap-12 lg:grid-cols-[1.1fr_1fr]">
-        <div>
+        <div className="min-w-0">
           <FotoProducto
             descripcion={producto.imagen}
             url={producto.imagenUrl}
@@ -85,7 +88,7 @@ export function DetalleProducto({
           )}
         </div>
 
-        <div className="flex flex-col gap-5">
+        <div className="flex min-w-0 flex-col gap-5">
           <div className="flex items-start justify-between gap-3">
             <Link
               href={`/marca/${producto.marca.toLowerCase()}`}

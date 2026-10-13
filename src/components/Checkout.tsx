@@ -14,28 +14,49 @@ type Paso = 'datos' | 'redirigiendo' | 'pasarela' | 'registrando' | 'rechazado' 
 
 const vacio = { nombre: '', apellido: '', documento: '', telefono: '', correo: '' };
 
+/**
+ * Campo del checkout.
+ *
+ * El error iba en negro, con borde negro: igual que un campo normal, así que
+ * no se notaba y parecía que el formulario no validaba nada. Ahora el error se
+ * ve en rojo, el campo obligatorio lleva asterisco, y el `id` permite que el
+ * formulario lleve el foco al primero que falta.
+ */
 function Campo({
-  etiqueta, valor, alCambiar, error, tipo = 'text',
+  etiqueta, valor, alCambiar, error, tipo = 'text', campo, obligatorio = false,
 }: {
   etiqueta: string;
   valor: string;
   alCambiar: (v: string) => void;
   error?: string;
   tipo?: string;
+  campo: string;
+  obligatorio?: boolean;
 }) {
   return (
-    <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
-      {etiqueta}
+    <label htmlFor={`campo-${campo}`} className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <span>
+        {etiqueta}
+        {obligatorio && <span className="ml-0.5 text-[#b4232a]" aria-hidden="true">*</span>}
+        {!obligatorio && <span className="ml-1.5 font-normal text-humo">(opcional)</span>}
+      </span>
       <input
+        id={`campo-${campo}`}
         type={tipo}
         value={valor}
         onChange={(e) => alCambiar(e.target.value)}
         aria-invalid={Boolean(error)}
+        aria-describedby={error ? `error-${campo}` : undefined}
+        required={obligatorio}
         className={`rounded-sm border px-3 py-3 text-[15px] font-normal ${
-          error ? 'border-carbon' : 'border-[#c9ced8]'
+          error ? 'border-[#b4232a] bg-[#fdf2f2]' : 'border-[#c9ced8]'
         }`}
       />
-      {error && <span className="font-normal text-carbon">{error}</span>}
+      {error && (
+        <span id={`error-${campo}`} className="font-normal text-[#b4232a]">
+          {error}
+        </span>
+      )}
     </label>
   );
 }
@@ -84,6 +105,19 @@ export function Checkout() {
       if (!entrega.ciudad.trim()) e.ciudad = 'Ingresá la ciudad';
     }
     setErrores(e);
+
+    // Sin esto, el aviso podía quedar fuera de la pantalla y parecía que el
+    // botón no hacía nada.
+    const primero = Object.keys(e)[0];
+    if (primero) {
+      // Un tick después del re-render: con requestAnimationFrame el foco se
+      // perdía porque React todavía no había pintado los mensajes.
+      setTimeout(() => {
+        const el = document.getElementById(`campo-${primero}`);
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el?.focus({ preventScroll: true });
+      }, 60);
+    }
     return Object.keys(e).length === 0;
   }
 
@@ -244,16 +278,20 @@ export function Checkout() {
       )}
 
       <div className="mt-8 grid gap-12 lg:grid-cols-[1fr_380px]">
-        <form onSubmit={(e) => { e.preventDefault(); irAPagar(); }} className="flex flex-col gap-9">
+        {/* `noValidate`: los campos llevan `required` para que el navegador y los
+            lectores de pantalla sepan cuales son obligatorios, pero la validacion
+            nativa cortaba el envio con su propio globo y nunca se veian estos
+            mensajes, que dicen mejor que falta. */}
+        <form noValidate onSubmit={(e) => { e.preventDefault(); irAPagar(); }} className="flex flex-col gap-9">
           <section>
             <h2 className="mb-4 text-lg font-bold">Tus datos</h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <Campo etiqueta="Nombre" error={errores.nombre} valor={cliente.nombre} alCambiar={(v) => setCliente({ ...cliente, nombre: v })} />
-              <Campo etiqueta="Apellido" error={errores.apellido} valor={cliente.apellido} alCambiar={(v) => setCliente({ ...cliente, apellido: v })} />
-              <Campo etiqueta="Documento" error={errores.documento} valor={cliente.documento} alCambiar={(v) => setCliente({ ...cliente, documento: v })} />
-              <Campo etiqueta="Teléfono" error={errores.telefono} tipo="tel" valor={cliente.telefono} alCambiar={(v) => setCliente({ ...cliente, telefono: v })} />
+              <Campo campo="nombre" obligatorio etiqueta="Nombre" error={errores.nombre} valor={cliente.nombre} alCambiar={(v) => setCliente({ ...cliente, nombre: v })} />
+              <Campo campo="apellido" obligatorio etiqueta="Apellido" error={errores.apellido} valor={cliente.apellido} alCambiar={(v) => setCliente({ ...cliente, apellido: v })} />
+              <Campo campo="documento" obligatorio etiqueta="Documento" error={errores.documento} valor={cliente.documento} alCambiar={(v) => setCliente({ ...cliente, documento: v })} />
+              <Campo campo="telefono" obligatorio etiqueta="Teléfono" error={errores.telefono} tipo="tel" valor={cliente.telefono} alCambiar={(v) => setCliente({ ...cliente, telefono: v })} />
               <div className="sm:col-span-2">
-                <Campo etiqueta="Correo" error={errores.correo} tipo="email" valor={cliente.correo} alCambiar={(v) => setCliente({ ...cliente, correo: v })} />
+                <Campo campo="correo" obligatorio etiqueta="Correo" error={errores.correo} tipo="email" valor={cliente.correo} alCambiar={(v) => setCliente({ ...cliente, correo: v })} />
               </div>
             </div>
           </section>
@@ -278,10 +316,10 @@ export function Checkout() {
             {modo === 'envio' ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <Campo etiqueta="Dirección" error={errores.direccion} valor={entrega.direccion} alCambiar={(v) => setEntrega({ ...entrega, direccion: v })} />
+                  <Campo campo="direccion" obligatorio etiqueta="Dirección" error={errores.direccion} valor={entrega.direccion} alCambiar={(v) => setEntrega({ ...entrega, direccion: v })} />
                 </div>
-                <Campo etiqueta="Ciudad" error={errores.ciudad} valor={entrega.ciudad} alCambiar={(v) => setEntrega({ ...entrega, ciudad: v })} />
-                <Campo etiqueta="Referencia" error={errores.referencia} valor={entrega.referencia} alCambiar={(v) => setEntrega({ ...entrega, referencia: v })} />
+                <Campo campo="ciudad" obligatorio etiqueta="Ciudad" error={errores.ciudad} valor={entrega.ciudad} alCambiar={(v) => setEntrega({ ...entrega, ciudad: v })} />
+                <Campo campo="referencia" etiqueta="Referencia" error={errores.referencia} valor={entrega.referencia} alCambiar={(v) => setEntrega({ ...entrega, referencia: v })} />
               </div>
             ) : (
               <p className="border border-linea bg-total-50 p-4 text-sm text-grafito">
