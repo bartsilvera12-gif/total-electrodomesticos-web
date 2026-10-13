@@ -17,6 +17,46 @@ const BLOQUES_POR_DEFECTO: Bloque[] = [
   { id: 'institucional', nombre: 'Total para tu hogar + Redes', visible: true },
 ];
 
+/**
+ * Junta lo guardado con la lista real de bloques del sitio.
+ *
+ * Un bloque que se agregó al sitio después de la última vez que se guardó
+ * (pasó con «Banners de promo») no estaba en la config, y como el editor usaba
+ * la lista guardada tal cual, ese bloque no aparecía: no se podía ni ocultar ni
+ * mover. Se inserta en el lugar que le corresponde por diseño, no al final —
+ * misma regla que usa la portada para dibujarlos.
+ */
+function combinarBloques(guardados: Bloque[] | null | undefined): Bloque[] {
+  if (!Array.isArray(guardados) || guardados.length === 0) return BLOQUES_POR_DEFECTO;
+
+  const conocidos = new Map(BLOQUES_POR_DEFECTO.map((b) => [b.id, b]));
+  const vistos = new Set<string>();
+  const lista: Bloque[] = [];
+
+  for (const b of guardados) {
+    const base = conocidos.get(b?.id);
+    if (!base || vistos.has(b.id)) continue;
+    vistos.add(b.id);
+    // El nombre lo manda el código; lo guardado solo decide orden y visibilidad.
+    lista.push({ ...base, visible: b.visible !== false });
+  }
+
+  BLOQUES_POR_DEFECTO.forEach((base, i) => {
+    if (vistos.has(base.id)) return;
+    let destino = 0;
+    for (let j = i - 1; j >= 0; j--) {
+      const pos = lista.findIndex((x) => x.id === BLOQUES_POR_DEFECTO[j].id);
+      if (pos >= 0) {
+        destino = pos + 1;
+        break;
+      }
+    }
+    lista.splice(destino, 0, base);
+  });
+
+  return lista;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function EditorHome({ config }: { config: any }) {
   const [pendiente, iniciar] = useTransition();
@@ -27,9 +67,7 @@ export function EditorHome({ config }: { config: any }) {
   const [heroBajada, setHeroBajada] = useState(config?.hero_bajada ?? '');
   const [seoTitulo, setSeoTitulo] = useState(config?.seo_titulo ?? '');
   const [seoDesc, setSeoDesc] = useState(config?.seo_desc ?? '');
-  const [bloques, setBloques] = useState<Bloque[]>(
-    config?.bloques?.length ? config.bloques : BLOQUES_POR_DEFECTO,
-  );
+  const [bloques, setBloques] = useState<Bloque[]>(() => combinarBloques(config?.bloques));
 
   const mover = (i: number, d: number) => {
     const j = i + d;
