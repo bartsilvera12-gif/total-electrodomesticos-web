@@ -25,8 +25,28 @@ import {
  * es la red de contención, no el camino principal. Conviene rebuildear cada
  * tanto para que los productos nuevos también se indexen.
  */
+
+/**
+ * Saca el slug de la URL.
+ *
+ * El .htaccess reescribe /producto/<slug>/ hacia esta pagina pasando el slug
+ * como query, PERO esa reescritura es interna de Apache: el navegador sigue
+ * viendo /producto/<slug>/ y `location.search` llega vacio. Por eso el slug se
+ * lee del pathname, y la query queda solo como respaldo para entrar directo a
+ * /producto/ver/?slug=algo.
+ */
+function slugDeLaUrl(buscado: string | null, segmento: string): string {
+  if (buscado) return buscado;
+  if (typeof window === "undefined") return "";
+  const partes = window.location.pathname.split("/").filter(Boolean);
+  const i = partes.indexOf(segmento);
+  const s = i >= 0 ? partes[i + 1] : "";
+  // /producto/ver/ es esta misma pagina: ahi no hay slug que valga.
+  return !s || s === "ver" ? "" : decodeURIComponent(s);
+}
+
 function Ficha() {
-  const slug = useSearchParams().get('slug') ?? '';
+  const slug = slugDeLaUrl(useSearchParams().get('slug'), 'producto');
 
   const { datos, cargando, error } = useDatos(
     useCallback(async () => {

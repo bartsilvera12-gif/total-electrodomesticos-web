@@ -16,8 +16,28 @@ import { useDatos } from '@/lib/useDatos';
  * cualquier /categoria/<slug>/ que no exista en disco, con el slug en la
  * query, y se resuelve en el navegador.
  */
+
+/**
+ * Saca el slug de la URL.
+ *
+ * El .htaccess reescribe /categoria/<slug>/ hacia esta pagina pasando el slug
+ * como query, PERO esa reescritura es interna de Apache: el navegador sigue
+ * viendo /categoria/<slug>/ y `location.search` llega vacio. Por eso el slug se
+ * lee del pathname, y la query queda solo como respaldo para entrar directo a
+ * /categoria/ver/?slug=algo.
+ */
+function slugDeLaUrl(buscado: string | null, segmento: string): string {
+  if (buscado) return buscado;
+  if (typeof window === "undefined") return "";
+  const partes = window.location.pathname.split("/").filter(Boolean);
+  const i = partes.indexOf(segmento);
+  const s = i >= 0 ? partes[i + 1] : "";
+  // /categoria/ver/ es esta misma pagina: ahi no hay slug que valga.
+  return !s || s === "ver" ? "" : decodeURIComponent(s);
+}
+
 function Listado() {
-  const slug = useSearchParams().get('slug') ?? '';
+  const slug = slugDeLaUrl(useSearchParams().get('slug'), 'categoria');
 
   const { datos, cargando, error } = useDatos(
     useCallback(async () => {
