@@ -32,6 +32,16 @@ export const ASESORES: Asesor[] = [
 ];
 
 /**
+ * Los pedidos se toman por WhatsApp, no por la tienda.
+ *
+ * Mientras PagoPar no esté con las credenciales productivas y los pedidos web
+ * no entren al ERP, cobrar en la página sería prometer algo que atrás no pasa
+ * nada. Con esto en `true`, "Comprar" abre el chat con el detalle escrito.
+ * Cuando el cobro esté listo, se pone en `false` y vuelve el checkout.
+ */
+export const COMPRA_POR_WHATSAPP = true;
+
+/**
  * Promesas que NO se pueden hacer sin confirmación del cliente: envío gratis,
  * financiación, garantías, entregas en 24 horas, años de trayectoria, cantidad
  * de sucursales. Si alguna se confirma, se agrega acá y recién ahí a la web.

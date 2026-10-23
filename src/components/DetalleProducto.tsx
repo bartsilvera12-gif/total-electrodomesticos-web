@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { mensajePedidoWhatsapp } from '@/lib/formato';
+import { COMPRA_POR_WHATSAPP } from '@/lib/sitio';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Producto, Rubro } from '@/lib/catalogo/tipos';
@@ -127,13 +129,31 @@ export function DetalleProducto({
                 >
                   Agregar al carrito
                 </button>
-                <button
-                  type="button"
-                  onClick={comprarAhora}
-                  className="flex-1 rounded-sm border border-carbon px-6 py-4 text-[15px] font-bold hover:bg-carbon hover:text-white"
-                >
-                  Comprar ahora
-                </button>
+                {COMPRA_POR_WHATSAPP ? (
+                  <ConsultarWhatsapp
+                    mensaje={mensajePedidoWhatsapp(
+                      [{
+                        nombre: producto.nombre,
+                        marca: producto.marca,
+                        codigo: producto.codigo,
+                        cantidad,
+                        precio: producto.precio,
+                      }],
+                      typeof window !== 'undefined' ? window.location.href : undefined,
+                    )}
+                    className="flex-1 cursor-pointer rounded-sm border border-carbon px-6 py-4 text-center text-[15px] font-bold hover:bg-carbon hover:text-white"
+                  >
+                    Comprar por WhatsApp
+                  </ConsultarWhatsapp>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={comprarAhora}
+                    className="flex-1 rounded-sm border border-carbon px-6 py-4 text-[15px] font-bold hover:bg-carbon hover:text-white"
+                  >
+                    Comprar ahora
+                  </button>
+                )}
               </div>
             </>
           ) : (

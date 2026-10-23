@@ -23,3 +23,33 @@ export function linkWhatsapp(numero: string, mensaje?: string): string {
   const base = `https://wa.me/${numero}`;
   return mensaje ? `${base}?text=${encodeURIComponent(mensaje)}` : base;
 }
+
+/** Una línea de pedido para armar el mensaje de WhatsApp. */
+export type LineaPedido = {
+  nombre: string;
+  marca?: string | null;
+  codigo?: string | null;
+  cantidad: number;
+  precio: number;
+};
+
+/**
+ * Mensaje de pedido para WhatsApp: qué quiere comprar, cuánto y el total.
+ *
+ * Va escrito para que del otro lado se pueda responder sin pedir dos veces lo
+ * mismo. El total es orientativo: el envío se confirma por chat.
+ */
+export function mensajePedidoWhatsapp(lineas: LineaPedido[], url?: string): string {
+  if (lineas.length === 0) return 'Hola Total, quiero hacer un pedido.';
+  const detalle = lineas
+    .map((l) => {
+      const marca = l.marca ? `${l.marca} ` : '';
+      const codigo = l.codigo ? ` (cód. ${l.codigo})` : '';
+      return `· ${marca}${l.nombre}${codigo} × ${l.cantidad} — ${guaranies(l.precio * l.cantidad)}`;
+    })
+    .join('\n');
+  const total = lineas.reduce((t, l) => t + l.precio * l.cantidad, 0);
+  const cierre = lineas.length > 1 ? `\nTotal: ${guaranies(total)}` : '';
+  const link = url ? `\n${url}` : '';
+  return `Hola Total, quiero comprar:\n${detalle}${cierre}${link}`;
+}

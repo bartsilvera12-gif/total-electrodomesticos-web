@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { mensajePedidoWhatsapp } from '@/lib/formato';
+import { COMPRA_POR_WHATSAPP } from '@/lib/sitio';
 import { useEffect } from 'react';
 import { useTienda } from '@/lib/tienda/contexto';
 import { guaranies } from '@/lib/formato';
@@ -41,6 +43,17 @@ export function CarritoLateral({
         .map((l) => `· ${l.producto.marca} ${l.producto.nombre} × ${l.cantidad}`)
         .join('\n')}`
     : '';
+
+  /** Pedido con cantidades, importes y total, para mandarlo por chat. */
+  const mensajePedido = mensajePedidoWhatsapp(
+    lineas.map((l) => ({
+      nombre: l.producto.nombre,
+      marca: l.producto.marca,
+      codigo: l.producto.codigo,
+      cantidad: l.cantidad,
+      precio: l.producto.precio,
+    })),
+  );
 
   return (
     <>
@@ -139,21 +152,40 @@ export function CarritoLateral({
               <p className="mt-1 text-xs text-humo">
                 El costo de envío se confirma según la dirección.
               </p>
-              <Link
-                href="/checkout"
-                onClick={cerrar}
-                className="mt-4 block rounded-sm bg-total-500 px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-total-600"
-              >
-                Finalizar compra
-              </Link>
-              <div className="mt-2 flex justify-center">
-                <ConsultarWhatsapp
-                  mensaje={mensaje}
-                  className="cursor-pointer py-2 text-sm font-semibold text-total-500 hover:underline"
-                >
-                  Consultar este carrito por WhatsApp
-                </ConsultarWhatsapp>
-              </div>
+              {COMPRA_POR_WHATSAPP ? (
+                /* El pedido se cierra por chat hasta que el cobro en la página esté listo. */
+                <div className="mt-4">
+                  <ConsultarWhatsapp
+                    mensaje={mensajePedido}
+                    alineacion="derecha"
+                    direccion="arriba"
+                    className="block w-full cursor-pointer rounded-sm bg-total-500 px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-total-600"
+                  >
+                    Pedir por WhatsApp
+                  </ConsultarWhatsapp>
+                  <p className="mt-2 text-center text-xs text-humo">
+                    Te confirmamos stock, envío y forma de pago por chat.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <Link
+                    href="/checkout"
+                    onClick={cerrar}
+                    className="mt-4 block rounded-sm bg-total-500 px-5 py-3.5 text-center text-sm font-bold text-white hover:bg-total-600"
+                  >
+                    Finalizar compra
+                  </Link>
+                  <div className="mt-2 flex justify-center">
+                    <ConsultarWhatsapp
+                      mensaje={mensaje}
+                      className="cursor-pointer py-2 text-sm font-semibold text-total-500 hover:underline"
+                    >
+                      Consultar este carrito por WhatsApp
+                    </ConsultarWhatsapp>
+                  </div>
+                </>
+              )}
             </footer>
           </>
         )}

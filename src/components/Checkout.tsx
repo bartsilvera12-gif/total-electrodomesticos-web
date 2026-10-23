@@ -1,6 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { ConsultarWhatsapp } from './ConsultarWhatsapp';
+import { mensajePedidoWhatsapp } from '@/lib/formato';
+import { COMPRA_POR_WHATSAPP } from '@/lib/sitio';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useProductos } from '@/lib/catalogo/useProductos';
@@ -162,6 +165,73 @@ export function Checkout() {
 
   if (!listo) {
     return <div className="mx-auto max-w-2xl px-6 py-24 text-center text-humo">Cargando tu pedido…</div>;
+  }
+
+  /**
+   * Mientras los pedidos se cierran por WhatsApp, esta pantalla no cobra nada:
+   * muestra el pedido y lleva al chat. Se llega acá por un enlace guardado o
+   * por el botón viejo del carrito, así que no puede quedar en un formulario
+   * de pago que no termina en ningún lado.
+   */
+  if (COMPRA_POR_WHATSAPP) {
+    const pedido = mensajePedidoWhatsapp(
+      lineas.map((l) => ({
+        nombre: l.producto.nombre,
+        marca: l.producto.marca,
+        codigo: l.producto.codigo,
+        cantidad: l.cantidad,
+        precio: l.producto.precio,
+      })),
+    );
+    return (
+      <div className="mx-auto max-w-xl px-6 py-20">
+        <h1 className="text-2xl font-bold">Tu pedido</h1>
+        <p className="mt-2 text-sm text-humo">
+          Por ahora los pedidos se cierran por WhatsApp: te confirmamos stock, envío y forma de
+          pago por chat.
+        </p>
+
+        {lineas.length === 0 ? (
+          <div className="mt-8 flex flex-col items-center gap-4 text-center">
+            <p className="text-humo">Tu carrito está vacío.</p>
+            <Link
+              href="/productos"
+              className="rounded-sm bg-total-500 px-5 py-3 text-sm font-bold text-white hover:bg-total-600"
+            >
+              Explorar productos
+            </Link>
+          </div>
+        ) : (
+          <>
+            <ul className="mt-8 divide-y divide-linea border-y border-linea">
+              {lineas.map((l) => (
+                <li key={l.productoId} className="flex items-baseline justify-between gap-4 py-3">
+                  <span className="text-sm">
+                    {l.producto.marca} {l.producto.nombre}
+                    <span className="text-humo"> × {l.cantidad}</span>
+                  </span>
+                  <span className="text-sm font-semibold">
+                    {guaranies(l.producto.precio * l.cantidad)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-4 flex items-baseline justify-between">
+              <span className="text-sm text-humo">Total (sin envío)</span>
+              <span className="text-xl font-bold">{guaranies(subtotal)}</span>
+            </div>
+            <div className="mt-6">
+              <ConsultarWhatsapp
+                mensaje={pedido}
+                className="block w-full cursor-pointer rounded-sm bg-total-500 px-5 py-4 text-center text-sm font-bold text-white hover:bg-total-600"
+              >
+                Pedir por WhatsApp
+              </ConsultarWhatsapp>
+            </div>
+          </>
+        )}
+      </div>
+    );
   }
 
   if (lineas.length === 0 && paso === 'datos') {
