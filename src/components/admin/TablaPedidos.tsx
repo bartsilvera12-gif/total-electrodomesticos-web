@@ -65,8 +65,19 @@ export function TablaPedidos({
                 </span>
               </span>
               <span className="text-sm text-humo">{fechaCorta(p.created_at)}</span>
-              <span className="text-sm">
-                {p.estado_pago === 'aprobado' ? 'Pago aprobado' : 'Pago pendiente'}
+              {/* Pago y estado del pedido son dos cosas: un cancelado con pago
+                  aprobado se leía como un pedido vivo. */}
+              <span className="flex flex-col text-sm">
+                <span>{p.estado_pago === 'aprobado' ? 'Pago aprobado' : 'Pago pendiente'}</span>
+                <span
+                  className={
+                    p.estado === 'cancelado'
+                      ? 'text-[13px] font-semibold text-[#b42318]'
+                      : 'text-[13px] text-humo'
+                  }
+                >
+                  {ETIQUETA_ESTADO[p.estado] ?? p.estado}
+                </span>
               </span>
               <span className="font-bold">{guaranies(Number(p.total))}</span>
             </button>

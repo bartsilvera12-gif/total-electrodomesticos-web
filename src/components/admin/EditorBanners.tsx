@@ -39,6 +39,8 @@ export function EditorBanners({ iniciales }: { iniciales: BannerPanel[] }) {
   const [lista, setLista] = useState<BannerPanel[]>(iniciales);
   const [editando, setEditando] = useState<Borrador | null>(null);
   const [mensaje, setMensaje] = useState<string | null>(null);
+  /** Banner esperando confirmación de borrado. */
+  const [porBorrar, setPorBorrar] = useState<string | null>(null);
   const [pendiente, iniciar] = useTransition();
 
   function avisar(e: unknown) {
@@ -106,8 +108,13 @@ export function EditorBanners({ iniciales }: { iniciales: BannerPanel[] }) {
     });
   }
 
+  /**
+   * Borrar pide confirmación en la propia página, no con el cuadro del
+   * navegador. Chrome deja de mostrar esos diálogos cuando aparecen varios
+   * seguidos —y en algunos navegadores embebidos no aparecen nunca—: ahí
+   * `confirm()` devuelve false solo y el botón no hacía nada, sin aviso.
+   */
   function borrar(b: BannerPanel) {
-    if (!window.confirm(`¿Borrar el banner "${b.titulo}"?`)) return;
     const antes = lista;
     setLista((prev) => prev.filter((x) => x.id !== b.id));
     iniciar(async () => {
@@ -248,14 +255,35 @@ export function EditorBanners({ iniciales }: { iniciales: BannerPanel[] }) {
               >
                 Editar
               </button>
-              <button
-                type="button"
-                onClick={() => borrar(b)}
-                disabled={pendiente}
-                className="shrink-0 text-[13px] font-semibold text-[#b42318] underline disabled:opacity-40"
-              >
-                Borrar
-              </button>
+              {porBorrar === b.id ? (
+                <span className="flex shrink-0 items-center gap-2 text-[13px]">
+                  <span className="text-[#b42318]">¿Borrar?</span>
+                  <button
+                    type="button"
+                    onClick={() => { setPorBorrar(null); borrar(b); }}
+                    disabled={pendiente}
+                    className="font-semibold text-[#b42318] underline disabled:opacity-40"
+                  >
+                    Sí, borrar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPorBorrar(null)}
+                    className="text-[#667085] underline"
+                  >
+                    No
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setPorBorrar(b.id)}
+                  disabled={pendiente}
+                  className="shrink-0 text-[13px] font-semibold text-[#b42318] underline disabled:opacity-40"
+                >
+                  Borrar
+                </button>
+              )}
             </li>
           ))}
         </ul>
