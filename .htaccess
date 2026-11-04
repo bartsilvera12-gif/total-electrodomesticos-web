@@ -15,6 +15,32 @@
 Options -Indexes
 DirectoryIndex index.html
 
+# Caché
+#
+# Sin esto el HTML quedaba guardado (navegador, LiteSpeed de Hostinger y
+# Cloudflare) y el cliente seguía viendo la versión vieja después de publicar:
+# desactivó la categoría PRUEBA y le seguía saliendo. El HTML viejo además trae
+# el JS viejo, así que ni siquiera llegaba a consultar las categorías al día.
+#
+# - HTML y los .txt de Next (lo que pide al navegar entre páginas): se
+#   revalidan siempre. Si no cambiaron, Apache contesta 304 y no se descarga
+#   nada; si cambiaron, se ve lo nuevo en la siguiente carga.
+# - El JS y el CSS de /_next/static/ no se tocan: su nombre cambia con el
+#   contenido, así que un archivo guardado nunca queda viejo.
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|txt|xml|json)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+    Header set X-LiteSpeed-Cache-Control "no-cache"
+    Header unset Expires
+  </FilesMatch>
+</IfModule>
+
+# La caché de páginas de LiteSpeed (Hostinger) no debe guardar el sitio: el
+# HTML cambia con cada publicación y los datos se piden en vivo a Supabase.
+<IfModule LiteSpeed>
+  CacheLookup public off
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
 
