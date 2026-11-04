@@ -3,8 +3,11 @@
 import Link from 'next/link';
 import { mensajePedidoWhatsapp } from '@/lib/formato';
 import { COMPRA_POR_WHATSAPP } from '@/lib/sitio';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { lineaDeFicha } from '@/lib/catalogo/caracteristicas';
+import { obtenerProductoPorSlug } from '@/lib/catalogo/servicio';
+import { useDatos } from '@/lib/useDatos';
 import type { Producto, Rubro } from '@/lib/catalogo/tipos';
 import { guaranies } from '@/lib/formato';
 import { ConsultarWhatsapp } from './ConsultarWhatsapp';
@@ -15,15 +18,23 @@ import { Precio } from './Precio';
 import { TarjetaProducto } from './TarjetaProducto';
 
 const SOLAPAS = [
-  { id: 'caracteristicas', etiqueta: 'Características principales' },
+  { id: 'caracteristicas', etiqueta: 'Características' },
   { id: 'ficha', etiqueta: 'Ficha técnica' },
   { id: 'descripcion', etiqueta: 'Descripción' },
   { id: 'garantia', etiqueta: 'Garantía' },
 ] as const;
 
 export function DetalleProducto({
-  producto, relacionados, rubro,
+  producto: delBuild, relacionados, rubro,
 }: { producto: Producto; relacionados: Producto[]; rubro: Rubro | null }) {
+  // El HTML de la ficha sale del build. Se vuelve a pedir el producto en el
+  // navegador para que lo que se guarda en el panel (características,
+  // descripción, fotos) y el precio o stock del ERP se vean sin rebuildear.
+  const { datos: vivo } = useDatos<Producto | null>(
+    useCallback(() => obtenerProductoPorSlug(delBuild.slug), [delBuild.slug]),
+    delBuild,
+  );
+  const producto = vivo ?? delBuild;
   const { agregar, alternarFavorito, esFavorito } = useTienda();
   const router = useRouter();
   const [cantidad, setCantidad] = useState(1);
@@ -33,6 +44,10 @@ export function DetalleProducto({
   const comprable = sePuedeComprar(producto.disponibilidad);
   const favorito = esFavorito(producto.id);
   const comparado = relacionados.find((r) => r.id === comparar);
+  // Todas las que se cargaron en el panel; `specs` trae solo las tres de la tarjeta.
+  const caracteristicas = producto.fichaTecnica
+    ? producto.fichaTecnica.map(lineaDeFicha).filter(Boolean)
+    : producto.specs;
 
   const comprarAhora = () => {
     agregar(producto.id, cantidad);
@@ -205,13 +220,17 @@ export function DetalleProducto({
 
         <div className="py-7 text-[15px] leading-relaxed text-grafito">
           {solapa === 'caracteristicas' && (
-            <ul className="flex flex-col gap-2">
-              {producto.specs.map((s) => (
-                <li key={s} className="flex gap-2.5">
-                  <span className="text-total-500">·</span>{s}
-                </li>
-              ))}
-            </ul>
+            caracteristicas.length ? (
+              <ul className="flex flex-col gap-2">
+                {caracteristicas.map((s, i) => (
+                  <li key={i} className="flex gap-2.5">
+                    <span className="text-total-500">·</span>{s}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="max-w-2xl">Consultanos por WhatsApp y te pasamos las características de este artículo.</p>
+            )
           )}
           {solapa === 'ficha' && (
             <dl className="grid max-w-xl gap-px bg-linea">

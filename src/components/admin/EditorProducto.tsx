@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { guardarProducto } from '@/lib/admin/acciones';
+import { fichaDeTexto, textoDeFicha } from '@/lib/catalogo/caracteristicas';
 import type { ProductoPanel } from '@/lib/admin/consultas';
 import { guaranies } from '@/lib/formato';
 
@@ -22,7 +23,7 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null);
 
   const [descripcion, setDescripcion] = useState(producto.descripcion ?? '');
-  const [ficha, setFicha] = useState(producto.ficha.length ? producto.ficha : [{ etiqueta: '', valor: '' }]);
+  const [caracteristicas, setCaracteristicas] = useState(textoDeFicha(producto.ficha));
   const [galeria, setGaleria] = useState<string[]>(producto.galeria);
   const [nuevaFoto, setNuevaFoto] = useState('');
   const [seoTitulo, setSeoTitulo] = useState(producto.seoTitulo ?? '');
@@ -36,7 +37,7 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
         await guardarProducto({
           productoId: producto.id,
           descripcion,
-          ficha: ficha.filter((f) => f.etiqueta.trim() && f.valor.trim()),
+          ficha: fichaDeTexto(caracteristicas),
           galeria: galeria.filter(Boolean),
           seoTitulo,
           seoDesc,
@@ -100,45 +101,21 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
               />
             </label>
 
-            <div>
-              <p className="text-[13px] font-semibold">Ficha técnica</p>
-              <p className="mt-1 text-[13px] text-humo">
-                Lo que se muestra en la card y en la ficha del producto.
-              </p>
-              <div className="mt-3 flex flex-col gap-2">
-                {ficha.map((f, i) => (
-                  <div key={i} className="flex gap-2">
-                    <input
-                      value={f.etiqueta}
-                      onChange={(e) => setFicha(ficha.map((x, j) => (j === i ? { ...x, etiqueta: e.target.value } : x)))}
-                      placeholder="Pulgadas"
-                      className="w-40 rounded-sm border border-[#c9ced8] px-3 py-2 text-sm"
-                    />
-                    <input
-                      value={f.valor}
-                      onChange={(e) => setFicha(ficha.map((x, j) => (j === i ? { ...x, valor: e.target.value } : x)))}
-                      placeholder='55"'
-                      className="flex-1 rounded-sm border border-[#c9ced8] px-3 py-2 text-sm"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setFicha(ficha.filter((_, j) => j !== i))}
-                      aria-label="Quitar"
-                      className="px-2 text-humo hover:text-carbon"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setFicha([...ficha, { etiqueta: '', valor: '' }])}
-                className="mt-2 text-sm font-semibold text-total-500 hover:underline"
-              >
-                + Agregar una característica
-              </button>
-            </div>
+            <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+              Características del producto
+              <span className="font-normal text-humo">
+                Una por renglón, las que correspondan a este artículo. Se ven en la
+                solapa Características de la tienda; las tres primeras, también en
+                la tarjeta del producto.
+              </span>
+              <textarea
+                rows={8}
+                value={caracteristicas}
+                onChange={(e) => setCaracteristicas(e.target.value)}
+                placeholder={'Potencia: 600 W\nCapacidad: 1,5 L\nVaso de vidrio\n5 velocidades + pulso'}
+                className="rounded-sm border border-[#c9ced8] px-3 py-2.5 text-[15px] font-normal"
+              />
+            </label>
 
             <div>
               <p className="text-[13px] font-semibold">Fotos adicionales</p>

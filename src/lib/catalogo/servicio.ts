@@ -1,4 +1,5 @@
 import { supa, supaBuild, urlPublicaImagen } from '@/lib/supabase/cliente';
+import { lineaDeFicha } from './caracteristicas';
 import { ESPACIOS, FILTROS_DINAMICOS, LOGOS_MARCA } from './mock';
 import type {
   ConsultaCatalogo, Disponibilidad, Espacio, FiltroDinamico,
@@ -49,7 +50,7 @@ function aProducto(f: FilaCatalogo): Producto {
     marca: f.marca ?? '',
     rubro: f.categoria_slug ?? '',
     subcategoria: f.categoria ?? '',
-    specs: (f.ficha ?? []).map((x) => `${x.etiqueta}: ${x.valor}`).slice(0, 3),
+    specs: (f.ficha ?? []).map(lineaDeFicha).filter(Boolean).slice(0, 3),
     precio: Number(f.precio),
     precioAnterior: f.precio_anterior != null ? Number(f.precio_anterior) : undefined,
     disponibilidad: f.disponibilidad,
