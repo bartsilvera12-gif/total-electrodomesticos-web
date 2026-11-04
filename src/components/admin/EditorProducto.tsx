@@ -7,6 +7,10 @@ import { guardarProducto } from '@/lib/admin/acciones';
 import { fichaDeTexto, textoDeFicha } from '@/lib/catalogo/caracteristicas';
 import type { ProductoPanel } from '@/lib/admin/consultas';
 import { guaranies } from '@/lib/formato';
+import { urlPublicaImagen } from '@/lib/supabase/cliente';
+
+/** Además de la principal: 3 fotos por producto en total. Igual que en el ERP. */
+const MAX_FOTOS_ADICIONALES = 2;
 
 /** Campo del ERP: se muestra para dar contexto, no se edita acá. */
 function DelErp({ etiqueta, valor }: { etiqueta: string; valor: string }) {
@@ -120,14 +124,15 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
             <div>
               <p className="text-[13px] font-semibold">Fotos adicionales</p>
               <p className="mt-1 text-[13px] text-humo">
-                La foto principal se carga en el ERP. Acá se suman las demás, por
+                Hasta {MAX_FOTOS_ADICIONALES}, además de la principal. Lo normal es
+                subirlas desde Inventario del ERP; acá también se pueden sumar por
                 dirección web.
               </p>
               {galeria.length > 0 && (
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {galeria.map((g, i) => (
                     <li key={i} className="relative">
-                      <Image src={g} alt="" width={72} height={72} unoptimized className="size-18 rounded-sm border border-linea object-cover" />
+                      <Image src={urlPublicaImagen(g) ?? g} alt="" width={72} height={72} unoptimized className="size-18 rounded-sm border border-linea object-cover" />
                       <button
                         type="button"
                         onClick={() => setGaleria(galeria.filter((_, j) => j !== i))}
@@ -140,6 +145,7 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
                   ))}
                 </ul>
               )}
+              {galeria.length < MAX_FOTOS_ADICIONALES && (
               <div className="mt-3 flex gap-2">
                 <input
                   value={nuevaFoto}
@@ -155,6 +161,7 @@ export function EditorProducto({ producto }: { producto: ProductoPanel }) {
                   Agregar
                 </button>
               </div>
+              )}
             </div>
           </section>
 

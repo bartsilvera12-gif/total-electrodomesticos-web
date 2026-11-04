@@ -56,7 +56,8 @@ function aProducto(f: FilaCatalogo): Producto {
     disponibilidad: f.disponibilidad,
     imagen: f.nombre,
     imagenUrl: foto,
-    galeria: f.galeria ?? [],
+    // Rutas del bucket (subidas desde el ERP) o URLs pegadas en el panel
+    galeria: (f.galeria ?? []).map(urlPublicaImagen).filter((u): u is string => Boolean(u)),
     fichaTecnica: f.ficha ?? undefined,
     descripcion: f.descripcion_web ?? f.descripcion_erp ?? undefined,
     destacado: Boolean(f.destacado),

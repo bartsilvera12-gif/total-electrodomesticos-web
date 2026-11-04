@@ -58,6 +58,10 @@ export function DetalleProducto({
   const galeria = [producto.imagenUrl, ...(producto.galeria ?? [])].filter(
     (u): u is string => Boolean(u),
   );
+  // La que se ve grande. Si la elegida deja de existir (se refrescó el
+  // producto), vuelve a la principal.
+  const [elegida, setElegida] = useState<string | null>(null);
+  const fotoGrande = elegida && galeria.includes(elegida) ? elegida : galeria[0];
 
   return (
     <div className="mx-auto max-w-[1400px] px-6 py-10">
@@ -80,20 +84,27 @@ export function DetalleProducto({
         <div className="min-w-0">
           <FotoProducto
             descripcion={producto.imagen}
-            url={producto.imagenUrl}
+            url={fotoGrande}
             className="aspect-4/3 w-full"
           />
-          {/* Miniaturas: la principal (del ERP) y las de la galería, que se
-              cargan desde el panel. Solo las que existen de verdad. */}
+          {/* Miniaturas: la principal y las adicionales, que se suben desde
+              Inventario del ERP (o se pegan en el panel). Tocar una la muestra
+              grande. Solo las que existen de verdad. */}
           {galeria.length > 1 && (
             <div className="mt-3 grid grid-cols-4 gap-3">
               {galeria.slice(0, 4).map((url, i) => (
-                <FotoProducto
+                <button
                   key={url}
-                  descripcion={producto.imagen}
-                  url={url}
-                  className={`aspect-square ${i === 0 ? 'ring-2 ring-total-500' : ''}`}
-                />
+                  type="button"
+                  onClick={() => setElegida(url)}
+                  aria-label={`Ver foto ${i + 1} de ${Math.min(galeria.length, 4)}`}
+                  aria-pressed={url === fotoGrande}
+                  className={`block cursor-pointer border transition-colors ${
+                    url === fotoGrande ? 'border-total-500 ring-2 ring-total-500' : 'border-linea hover:border-total-400'
+                  }`}
+                >
+                  <FotoProducto descripcion={producto.imagen} url={url} className="aspect-square" />
+                </button>
               ))}
             </div>
           )}
