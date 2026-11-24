@@ -155,6 +155,23 @@ export async function obtenerRelacionados(producto: Producto, limite = 4): Promi
   return (data ?? []).map((f) => aProducto(f as FilaCatalogo));
 }
 
+const sinTildes = (s: string) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/**
+ * Convierte lo escrito en patrones `ilike` por palabra. Las vocales y la ñ se
+ * cambian por `_` (un carácter cualquiera) para que "heladera", "HELADERA" y
+ * "Heládera" encuentren lo mismo, con o sin tilde en la base.
+ */
+function patronesDeBusqueda(texto?: string): string[] {
+  return sinTildes(texto ?? '')
+    .split(/\s+/)
+    // fuera caracteres que rompen la sintaxis del filtro o los comodines
+    .map((w) => w.replace(/[,()%*\\"]/g, '').replace(/_/g, ''))
+    .filter(Boolean)
+    .map((w) => `*${w.replace(/[aeiouüñ]/g, '_')}*`);
+}
+
 export async function buscarProductos(consulta: ConsultaCatalogo = {}): Promise<ResultadoCatalogo> {
   const {
     rubro, subcategoria, marcas = [], disponibilidad = [],
@@ -171,9 +188,10 @@ export async function buscarProductos(consulta: ConsultaCatalogo = {}): Promise<
   if (typeof precioMin === 'number') q = q.gte('precio', precioMin);
   if (typeof precioMax === 'number') q = q.lte('precio', precioMax);
   if (soloOfertas) q = q.not('precio_anterior', 'is', null);
-  if (busqueda?.trim()) {
-    const t = busqueda.trim();
-    q = q.or(`nombre.ilike.%${t}%,marca.ilike.%${t}%,sku.ilike.%${t}%,categoria.ilike.%${t}%`);
+  // Cada palabra debe aparecer en algún campo (coincidencia parcial, sin
+  // importar mayúsculas ni tildes); las palabras se combinan con AND.
+  for (const p of patronesDeBusqueda(busqueda)) {
+    q = q.or(`nombre.ilike.${p},marca.ilike.${p},sku.ilike.${p},categoria.ilike.${p},codigo_barras.ilike.${p}`);
   }
 
   if (orden === 'precio-asc') q = q.order('precio', { ascending: true });
@@ -196,20 +214,25 @@ export async function buscarProductos(consulta: ConsultaCatalogo = {}): Promise<
 
 export async function sugerencias(termino: string) {
   const t = termino.trim();
-  if (!t) return { productos: [], rubros: [], marcas: [] };
+  const patrones = patronesDeBusqueda(t);
+  if (!patrones.length) return { productos: [], rubros: [], marcas: [] };
+
+  let qp = sb().from('web_catalogo').select('*');
+  for (const p of patrones) {
+    qp = qp.or(`nombre.ilike.${p},marca.ilike.${p},sku.ilike.${p},categoria.ilike.${p}`);
+  }
 
   const [prod, rubros, marcas] = await Promise.all([
-    sb().from('web_catalogo').select('*')
-      .or(`nombre.ilike.%${t}%,marca.ilike.%${t}%,sku.ilike.%${t}%`).limit(5),
+    qp.limit(5),
     obtenerRubros(),
     obtenerMarcas(),
   ]);
 
-  const n = t.toLowerCase();
+  const n = sinTildes(t);
   return {
     productos: (prod.data ?? []).map((f) => aProducto(f as FilaCatalogo)),
-    rubros: rubros.filter((r) => r.nombre.toLowerCase().includes(n)).slice(0, 3),
-    marcas: marcas.filter((m) => m.toLowerCase().includes(n)).slice(0, 3),
+    rubros: rubros.filter((r) => sinTildes(r.nombre).includes(n)).slice(0, 3),
+    marcas: marcas.filter((m) => sinTildes(m).includes(n)).slice(0, 3),
   };
 }
 
